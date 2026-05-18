@@ -9,7 +9,7 @@
     data: null,
   };
 
-  const SOURCE_LABEL = { g2b: "나라장터", bizinfo: "기업마당" };
+  const SOURCE_LABEL = { g2b: "나라장터", bizinfo: "기업마당", iris: "IRIS" };
 
   const $ = (sel) => document.querySelector(sel);
 
@@ -95,8 +95,12 @@
       ? `<div class="matched-keywords">${matched.map(k => `<span class="kw">${escapeHtml(k)}</span>`).join("")}</div>`
       : "";
 
-    const demanderLabel = source === "g2b" ? "수요기관" : "수행기관";
-    const orgLabel = source === "g2b" ? "공고기관" : "소관기관";
+    const demanderLabel =
+      source === "g2b" ? "수요기관" :
+      source === "iris" ? "소관부처" : "수행기관";
+    const orgLabel =
+      source === "g2b" ? "공고기관" :
+      source === "iris" ? "주관기관" : "소관기관";
     const idLabel = source === "g2b" ? "공고번호" : "공고ID";
 
     return `
@@ -225,8 +229,10 @@
     const bySrc = d.stats?.by_source?.total || {};
     const cntG = $("#cnt-g2b");
     const cntB = $("#cnt-bizinfo");
+    const cntI = $("#cnt-iris");
     if (cntG) cntG.textContent = bySrc.g2b ?? 0;
     if (cntB) cntB.textContent = bySrc.bizinfo ?? 0;
+    if (cntI) cntI.textContent = bySrc.iris ?? 0;
   }
 
   function bindEvents() {

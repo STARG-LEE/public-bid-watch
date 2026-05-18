@@ -199,6 +199,11 @@ main { padding: 28px 0 48px; }
   color: var(--warn);
   border-color: rgba(240, 136, 62, 0.35);
 }
+.source-badge.src-iris {
+  background: rgba(63, 185, 80, 0.15);
+  color: var(--good);
+  border-color: rgba(63, 185, 80, 0.35);
+}
 .div-badge.cat {
   background: rgba(139, 148, 158, 0.15);
   color: var(--muted);

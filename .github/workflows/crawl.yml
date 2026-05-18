@@ -65,6 +65,13 @@ jobs:
         continue-on-error: true
         run: python scripts/crawl_bizinfo.py
 
+      - name: 국가R&D 통합공고(IRIS) 수집
+        env:
+          TZ: Asia/Seoul
+        # IRIS 사이트 변경 시 죽지 않게
+        continue-on-error: true
+        run: python scripts/crawl_iris.py
+
       - name: 관련성 점수 평가 (LLM)
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
