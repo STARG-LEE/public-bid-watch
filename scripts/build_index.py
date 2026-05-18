@@ -80,8 +80,8 @@ def iter_daily_files(keep_days: int) -> dict[str, list[Path]]:
     iris:    iris-YYYY-MM-DD.json
     nrf:     nrf-YYYY-MM-DD.json
     """
-    PREFIXES = {"bizinfo-": "bizinfo", "iris-": "iris", "nrf-": "nrf"}
-    out: dict[str, list[Path]] = {"g2b": [], "bizinfo": [], "iris": [], "nrf": []}
+    PREFIXES = {"bizinfo-": "bizinfo", "iris-": "iris", "nrf-": "nrf", "iitp-": "iitp"}
+    out: dict[str, list[Path]] = {"g2b": [], "bizinfo": [], "iris": [], "nrf": [], "iitp": []}
     if not DATA_DIR.exists():
         return out
     cutoff = (datetime.now(tz=KST) - timedelta(days=keep_days)).date()
@@ -294,7 +294,11 @@ def main() -> int:
     biz_items = merge_simple_source(files_by_src["bizinfo"], keywords, case_sensitive, "bizinfo", "bizinfo")
     iris_items = merge_simple_source(files_by_src["iris"], keywords, case_sensitive, "iris", "iris")
     nrf_items = merge_simple_source(files_by_src["nrf"], keywords, case_sensitive, "nrf", "nrf")
-    print(f"g2b: {len(g2b_items)} / bizinfo: {len(biz_items)} / iris: {len(iris_items)} / nrf: {len(nrf_items)}")
+    iitp_items = merge_simple_source(files_by_src["iitp"], keywords, case_sensitive, "iitp", "iitp")
+    print(
+        f"g2b: {len(g2b_items)} / bizinfo: {len(biz_items)} / iris: {len(iris_items)} / "
+        f"nrf: {len(nrf_items)} / iitp: {len(iitp_items)}"
+    )
 
     # 관련성 필터는 캐시 기반 → 현재 g2b 만 평가 대상 (bizinfo 는 캐시 없으므로 전부 통과)
     skipped_low = 0
@@ -319,10 +323,11 @@ def main() -> int:
     if removed_dup > 0:
         print(f"g2b 중복 차수 제거 후: {len(g2b_items)}건 (구 차수 {removed_dup}건 제거)")
 
-    merged = g2b_items + biz_items + iris_items + nrf_items
+    merged = g2b_items + biz_items + iris_items + nrf_items + iitp_items
     print(
         f"최종 통합: {len(merged)}건 "
-        f"(g2b {len(g2b_items)} + bizinfo {len(biz_items)} + iris {len(iris_items)} + nrf {len(nrf_items)})"
+        f"(g2b {len(g2b_items)} + bizinfo {len(biz_items)} + iris {len(iris_items)} + "
+        f"nrf {len(nrf_items)} + iitp {len(iitp_items)})"
     )
 
     open_list, soon_list, closed_list = classify(merged)
@@ -343,7 +348,7 @@ def main() -> int:
             "service_divs": service_divs,
             "match_mode": cfg.get("match_mode", "any"),
             "keep_days": keep_days,
-            "sources": ["g2b", "bizinfo", "iris", "nrf"],
+            "sources": ["g2b", "bizinfo", "iris", "nrf", "iitp"],
             "relevance_filter": {
                 "enabled": rf_enabled,
                 "min_score": min_score,

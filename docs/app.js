@@ -9,7 +9,7 @@
     data: null,
   };
 
-  const SOURCE_LABEL = { g2b: "나라장터", bizinfo: "기업마당", iris: "IRIS", nrf: "NRF" };
+  const SOURCE_LABEL = { g2b: "나라장터", bizinfo: "기업마당", iris: "IRIS", nrf: "NRF", iitp: "IITP" };
 
   const $ = (sel) => document.querySelector(sel);
 
@@ -98,11 +98,11 @@
     const demanderLabel =
       source === "g2b" ? "수요기관" :
       source === "iris" ? "소관부처" :
-      source === "nrf" ? "" : "수행기관";
+      (source === "nrf" || source === "iitp") ? "" : "수행기관";
     const orgLabel =
       source === "g2b" ? "공고기관" :
       source === "iris" ? "주관기관" :
-      source === "nrf" ? "기관" : "소관기관";
+      (source === "nrf" || source === "iitp") ? "기관" : "소관기관";
     const idLabel = source === "g2b" ? "공고번호" : "공고ID";
 
     return `
@@ -233,10 +233,12 @@
     const cntB = $("#cnt-bizinfo");
     const cntI = $("#cnt-iris");
     const cntN = $("#cnt-nrf");
+    const cntT = $("#cnt-iitp");
     if (cntG) cntG.textContent = bySrc.g2b ?? 0;
     if (cntB) cntB.textContent = bySrc.bizinfo ?? 0;
     if (cntI) cntI.textContent = bySrc.iris ?? 0;
     if (cntN) cntN.textContent = bySrc.nrf ?? 0;
+    if (cntT) cntT.textContent = bySrc.iitp ?? 0;
   }
 
   function bindEvents() {

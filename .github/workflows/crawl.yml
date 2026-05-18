@@ -78,6 +78,12 @@ jobs:
         continue-on-error: true
         run: python scripts/crawl_nrf.py
 
+      - name: 정보통신기획평가원(IITP) 입찰공고 수집
+        env:
+          TZ: Asia/Seoul
+        continue-on-error: true
+        run: python scripts/crawl_iitp.py
+
       - name: 관련성 점수 평가 (LLM)
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
