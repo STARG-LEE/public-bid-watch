@@ -72,39 +72,37 @@ def load_config() -> dict:
         return json.load(f)
 
 
-def iter_daily_files(keep_days: int) -> tuple[list[Path], list[Path], list[Path]]:
-    """data/ 의 일별 파일을 g2b / bizinfo / iris 로 분리해 반환.
+def iter_daily_files(keep_days: int) -> dict[str, list[Path]]:
+    """data/ 의 일별 파일을 source 별로 분리해 반환.
 
     g2b:     YYYY-MM-DD.json
     bizinfo: bizinfo-YYYY-MM-DD.json
     iris:    iris-YYYY-MM-DD.json
+    nrf:     nrf-YYYY-MM-DD.json
     """
+    PREFIXES = {"bizinfo-": "bizinfo", "iris-": "iris", "nrf-": "nrf"}
+    out: dict[str, list[Path]] = {"g2b": [], "bizinfo": [], "iris": [], "nrf": []}
     if not DATA_DIR.exists():
-        return [], [], []
+        return out
     cutoff = (datetime.now(tz=KST) - timedelta(days=keep_days)).date()
-    g2b: list[Path] = []
-    biz: list[Path] = []
-    iris: list[Path] = []
     for p in sorted(DATA_DIR.glob("*.json")):
         stem = p.stem
         if stem.startswith("_"):
             continue
-        if stem.startswith("bizinfo-"):
-            date_str = stem[len("bizinfo-"):]
-            target = biz
-        elif stem.startswith("iris-"):
-            date_str = stem[len("iris-"):]
-            target = iris
-        else:
-            date_str = stem
-            target = g2b
+        source = "g2b"
+        date_str = stem
+        for prefix, src in PREFIXES.items():
+            if stem.startswith(prefix):
+                source = src
+                date_str = stem[len(prefix):]
+                break
         try:
             file_date = datetime.strptime(date_str, "%Y-%m-%d").date()
         except ValueError:
             continue
         if file_date >= cutoff:
-            target.append(p)
-    return g2b, biz, iris
+            out[source].append(p)
+    return out
 
 
 def match_keywords(title: str, keywords: list[str], case_sensitive: bool) -> list[str]:
@@ -158,11 +156,14 @@ def merge_g2b(
     return list(merged.values())
 
 
-def merge_iris(
+def merge_simple_source(
     files: list[Path],
     keywords: list[str],
     case_sensitive: bool,
+    source_label: str,
+    key_prefix: str,
 ) -> list[dict]:
+    """source_id 기반 단순 병합 (bizinfo/iris/nrf 공통 패턴)."""
     merged: dict[str, dict] = {}
     for path in files:
         try:
@@ -170,54 +171,19 @@ def merge_iris(
                 payload = json.load(f)
         except (json.JSONDecodeError, OSError):
             continue
-        collected_at = payload.get("date") or path.stem.replace("iris-", "")
+        collected_at = payload.get("date") or path.stem
         for item in payload.get("items", []):
             sid = item.get("source_id")
             if not sid:
                 continue
-            key = f"iris:{sid}"
+            key = f"{key_prefix}:{sid}"
             merged_item = dict(item)
             existing_seen = merged.get(key, {}).get("first_seen_date", collected_at)
             merged_item["first_seen_date"] = (
                 existing_seen if existing_seen < collected_at else collected_at
             )
             merged_item["last_seen_date"] = collected_at
-            merged_item["source"] = "iris"
-            title = str(item.get("title") or "")
-            merged_item["matched_keywords"] = match_keywords(
-                title, keywords, case_sensitive,
-            )
-            merged[key] = merged_item
-    return list(merged.values())
-
-
-def merge_bizinfo(
-    files: list[Path],
-    keywords: list[str],
-    case_sensitive: bool,
-) -> list[dict]:
-    merged: dict[str, dict] = {}
-    for path in files:
-        try:
-            with path.open(encoding="utf-8") as f:
-                payload = json.load(f)
-        except (json.JSONDecodeError, OSError):
-            continue
-        collected_at = payload.get("date") or path.stem.replace("bizinfo-", "")
-        for item in payload.get("items", []):
-            sid = item.get("source_id") or item.get("pblancId")
-            if not sid:
-                continue
-            key = f"bizinfo:{sid}"
-            merged_item = dict(item)
-            existing_seen = merged.get(key, {}).get("first_seen_date", collected_at)
-            merged_item["first_seen_date"] = (
-                existing_seen if existing_seen < collected_at else collected_at
-            )
-            merged_item["last_seen_date"] = collected_at
-            merged_item["source"] = "bizinfo"
-            # bizinfo 는 crawler 에서 이미 matched_keywords 채워두지만,
-            # 키워드 설정이 바뀐 경우를 대비해 여기서 한 번 더 재계산.
+            merged_item["source"] = source_label
             title = str(item.get("title") or item.get("bidNtceNm") or "")
             summary = str(item.get("summary") or "")
             merged_item["matched_keywords"] = match_keywords(
@@ -312,8 +278,11 @@ def main() -> int:
     rf_enabled = bool(rf.get("enabled", False))
     min_score = int(rf.get("min_score", 0)) if rf_enabled else None
 
-    g2b_files, biz_files, iris_files = iter_daily_files(keep_days)
-    print(f"g2b: {len(g2b_files)}개 / bizinfo: {len(biz_files)}개 / iris: {len(iris_files)}개")
+    files_by_src = iter_daily_files(keep_days)
+    print(
+        "파일 수: "
+        + " / ".join(f"{k}={len(v)}" for k, v in files_by_src.items())
+    )
     if service_divs:
         print(f"용역구분 화이트리스트(srvceDivNm): {service_divs}")
 
@@ -321,10 +290,11 @@ def main() -> int:
     if rf_enabled:
         print(f"관련성 캐시: {len(cache)}건 / min_score={min_score}")
 
-    g2b_items = merge_g2b(g2b_files, keywords, case_sensitive, service_divs, cache)
-    biz_items = merge_bizinfo(biz_files, keywords, case_sensitive)
-    iris_items = merge_iris(iris_files, keywords, case_sensitive)
-    print(f"g2b: {len(g2b_items)} / bizinfo: {len(biz_items)} / iris: {len(iris_items)}")
+    g2b_items = merge_g2b(files_by_src["g2b"], keywords, case_sensitive, service_divs, cache)
+    biz_items = merge_simple_source(files_by_src["bizinfo"], keywords, case_sensitive, "bizinfo", "bizinfo")
+    iris_items = merge_simple_source(files_by_src["iris"], keywords, case_sensitive, "iris", "iris")
+    nrf_items = merge_simple_source(files_by_src["nrf"], keywords, case_sensitive, "nrf", "nrf")
+    print(f"g2b: {len(g2b_items)} / bizinfo: {len(biz_items)} / iris: {len(iris_items)} / nrf: {len(nrf_items)}")
 
     # 관련성 필터는 캐시 기반 → 현재 g2b 만 평가 대상 (bizinfo 는 캐시 없으므로 전부 통과)
     skipped_low = 0
@@ -349,8 +319,11 @@ def main() -> int:
     if removed_dup > 0:
         print(f"g2b 중복 차수 제거 후: {len(g2b_items)}건 (구 차수 {removed_dup}건 제거)")
 
-    merged = g2b_items + biz_items + iris_items
-    print(f"최종 통합: {len(merged)}건 (g2b {len(g2b_items)} + bizinfo {len(biz_items)} + iris {len(iris_items)})")
+    merged = g2b_items + biz_items + iris_items + nrf_items
+    print(
+        f"최종 통합: {len(merged)}건 "
+        f"(g2b {len(g2b_items)} + bizinfo {len(biz_items)} + iris {len(iris_items)} + nrf {len(nrf_items)})"
+    )
 
     open_list, soon_list, closed_list = classify(merged)
 
@@ -370,7 +343,7 @@ def main() -> int:
             "service_divs": service_divs,
             "match_mode": cfg.get("match_mode", "any"),
             "keep_days": keep_days,
-            "sources": ["g2b", "bizinfo", "iris"],
+            "sources": ["g2b", "bizinfo", "iris", "nrf"],
             "relevance_filter": {
                 "enabled": rf_enabled,
                 "min_score": min_score,

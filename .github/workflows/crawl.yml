@@ -72,6 +72,12 @@ jobs:
         continue-on-error: true
         run: python scripts/crawl_iris.py
 
+      - name: 한국연구재단(NRF) 공고 수집
+        env:
+          TZ: Asia/Seoul
+        continue-on-error: true
+        run: python scripts/crawl_nrf.py
+
       - name: 관련성 점수 평가 (LLM)
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}

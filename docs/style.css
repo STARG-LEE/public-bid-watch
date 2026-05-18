@@ -204,6 +204,11 @@ main { padding: 28px 0 48px; }
   color: var(--good);
   border-color: rgba(63, 185, 80, 0.35);
 }
+.source-badge.src-nrf {
+  background: rgba(255, 123, 114, 0.15);
+  color: var(--danger);
+  border-color: rgba(255, 123, 114, 0.35);
+}
 .div-badge.cat {
   background: rgba(139, 148, 158, 0.15);
   color: var(--muted);
