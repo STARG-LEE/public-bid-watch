@@ -226,19 +226,30 @@
     $("#stat-open").textContent = d.stats?.open ?? "-";
     $("#stat-closed").textContent = d.stats?.closed ?? "-";
     $("#stat-total").textContent = d.stats?.total ?? "-";
+    updateSourceCounts();
+  }
 
-    // 출처별 카운트 (전체 통합 기준)
-    const bySrc = d.stats?.by_source?.total || {};
-    const cntG = $("#cnt-g2b");
-    const cntB = $("#cnt-bizinfo");
-    const cntI = $("#cnt-iris");
-    const cntN = $("#cnt-nrf");
-    const cntT = $("#cnt-iitp");
-    if (cntG) cntG.textContent = bySrc.g2b ?? 0;
-    if (cntB) cntB.textContent = bySrc.bizinfo ?? 0;
-    if (cntI) cntI.textContent = bySrc.iris ?? 0;
-    if (cntN) cntN.textContent = bySrc.nrf ?? 0;
-    if (cntT) cntT.textContent = bySrc.iitp ?? 0;
+  // 출처 칩 카운트를 '현재 탭의 버킷' 기준으로 갱신.
+  // 위 카운트와 실제 클릭 시 보이는 항목 수가 정확히 일치하도록.
+  function updateSourceCounts() {
+    const d = state.data;
+    if (!d) return;
+    const bucket = d[state.tab] || [];
+    const counts = { g2b: 0, bizinfo: 0, iris: 0, nrf: 0, iitp: 0 };
+    for (const it of bucket) {
+      const s = it.source || "g2b";
+      if (s in counts) counts[s] += 1;
+    }
+    const setCount = (sel, n) => {
+      const el = $(sel);
+      if (el) el.textContent = n;
+    };
+    setCount("#cnt-all", bucket.length);
+    setCount("#cnt-g2b", counts.g2b);
+    setCount("#cnt-bizinfo", counts.bizinfo);
+    setCount("#cnt-iris", counts.iris);
+    setCount("#cnt-nrf", counts.nrf);
+    setCount("#cnt-iitp", counts.iitp);
   }
 
   function bindEvents() {
@@ -247,7 +258,8 @@
         document.querySelectorAll(".tab").forEach((b) => b.classList.remove("active"));
         btn.classList.add("active");
         state.tab = btn.dataset.tab;
-        // 탭 바꾸면 해당 버킷에 있는 키워드 기준으로 칩을 다시 그림
+        // 탭 바꾸면 출처 카운트 + 키워드 칩 둘 다 현재 버킷 기준으로 재계산
+        updateSourceCounts();
         buildKeywordFilter();
         render();
       });
