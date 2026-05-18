@@ -4626,6 +4626,13 @@
     "score": 4,
     "scored_at": "2026-05-12T10:17:01+09:00"
   },
+  "R26BK01512858-001": {
+    "model": "gpt-5-mini",
+    "provider": "openai",
+    "reason": "AI·빅데이터 활용 전략 정책연구로 AI 컨설팅·연구와 직접 연관",
+    "score": 5,
+    "scored_at": "2026-05-18T16:55:11+09:00"
+  },
   "R26BK01512878-000": {
     "model": "gpt-5-mini",
     "provider": "openai",
@@ -6515,5 +6522,26 @@
     "reason": "철도 유지관리 중심 실무교육으로 의료·생성AI·금융 등 주요 관심분야와 무관",
     "score": 1,
     "scored_at": "2026-05-18T16:36:54+09:00"
+  },
+  "R26BK01529282-001": {
+    "model": "gpt-5-mini",
+    "provider": "openai",
+    "reason": "빅데이터 교육은 일부 관련, 철도 유지관리 중심으로 비핵심",
+    "score": 2,
+    "scored_at": "2026-05-18T16:55:11+09:00"
+  },
+  "R26BK01529625-000": {
+    "model": "gpt-5-mini",
+    "provider": "openai",
+    "reason": "농업 플랫폼 법률·재무 컨설팅으로 AI/헬스·데이터 분야와 직접적 연관성 낮음",
+    "score": 2,
+    "scored_at": "2026-05-18T16:55:11+09:00"
+  },
+  "R26BK01529634-000": {
+    "model": "gpt-5-mini",
+    "provider": "openai",
+    "reason": "AI 기반 시스템 구축·현장 실증 관련으로 부분 관련",
+    "score": 3,
+    "scored_at": "2026-05-18T16:55:11+09:00"
   }
 }

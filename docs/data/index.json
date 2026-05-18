@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-18T16:53:05+09:00",
+  "generated_at": "2026-05-18T16:55:44+09:00",
   "config": {
     "keywords": [
       "AI",
@@ -38,19 +38,19 @@
     }
   },
   "stats": {
-    "open": 432,
-    "closing_soon": 135,
+    "open": 434,
+    "closing_soon": 134,
     "closed": 281,
-    "total": 848,
+    "total": 849,
     "by_source": {
       "closing_soon": {
-        "g2b": 96,
+        "g2b": 95,
         "bizinfo": 37,
         "iris": 2
       },
       "open": {
         "bizinfo": 221,
-        "g2b": 207,
+        "g2b": 209,
         "iris": 3,
         "nrf": 1
       },
@@ -58,7 +58,7 @@
         "g2b": 281
       },
       "total": {
-        "g2b": 584,
+        "g2b": 585,
         "bizinfo": 258,
         "iris": 5,
         "nrf": 1
@@ -3407,42 +3407,6 @@
       "_hours_remaining": 89.1
     },
     {
-      "bidNtceNo": "R26BK01512858",
-      "bidNtceOrd": "000",
-      "bidNtceNm": "소방안전 AI·빅데이터 사용자 중심 활용전략 수립 정책연구",
-      "ntceInsttNm": "소방청",
-      "ntceInsttCd": "1661000",
-      "dminsttNm": "소방청",
-      "dminsttCd": "1661000",
-      "bidMethdNm": "전자입찰",
-      "cntrctCnclsMthdNm": "제한경쟁",
-      "ntceKindNm": "재공고",
-      "bsnsDivNm": "",
-      "srvceDivNm": "일반용역",
-      "ppswGnrlSrvceYn": "N",
-      "bidNtceDt": "2026-05-11 13:23:22",
-      "bidBeginDt": "2026-05-18 10:00:00",
-      "bidClseDt": "2026-05-22 10:00:00",
-      "opengDt": "2026-05-22 11:00:00",
-      "asignBdgtAmt": "30000000",
-      "presmptPrce": "27272727",
-      "bidNtceDtlUrl": "https://www.g2b.go.kr/link/PNPE027_01/single/?bidPbancNo=R26BK01512858&bidPbancOrd=000",
-      "ntceInsttOfclNm": "신정필",
-      "ntceInsttOfclTelNo": "044-205-7052",
-      "sucsfbidMthdNm": "협상에의한계약-협상에 의한 낙찰자 결정",
-      "first_seen_date": "2026-05-12",
-      "last_seen_date": "2026-05-12",
-      "source": "g2b",
-      "matched_keywords": [
-        "AI",
-        "빅데이터"
-      ],
-      "_relevance_score": 4,
-      "_relevance_reason": "AI·빅데이터 정책연구로 정부 컨설팅·시스템 구축 경험과 연관",
-      "_bidClseDt_iso": "2026-05-22T10:00:00+09:00",
-      "_hours_remaining": 89.1
-    },
-    {
       "bidNtceNo": "R26BK01513042",
       "bidNtceOrd": "000",
       "bidNtceNm": "인공지능(AI) 활용 신약개발 경진대회 위탁 운영",
@@ -5167,6 +5131,41 @@
       "_hours_remaining": 185.1
     },
     {
+      "bidNtceNo": "R26BK01529634",
+      "bidNtceOrd": "000",
+      "bidNtceNm": "AI 기반 실시간 코칭이 결합된 스마트 무인 골프 트레이닝 시스템 도입 매장 확산을 위한 IoT 자동화 장비 맞춤 설치·현장 실증 및 유지보수 용역",
+      "ntceInsttNm": "주식회사 김캐디",
+      "ntceInsttCd": "Z060017",
+      "dminsttNm": "주식회사 김캐디",
+      "dminsttCd": "Z060017",
+      "bidMethdNm": "전자입찰",
+      "cntrctCnclsMthdNm": "일반경쟁",
+      "ntceKindNm": "등록공고",
+      "bsnsDivNm": "",
+      "srvceDivNm": "일반용역",
+      "ppswGnrlSrvceYn": "N",
+      "bidNtceDt": "2026-05-18 16:52:44",
+      "bidBeginDt": "2026-05-18 17:00:00",
+      "bidClseDt": "2026-05-26 10:00:00",
+      "opengDt": "2026-05-26 11:00:00",
+      "asignBdgtAmt": "121000000",
+      "presmptPrce": "110000000",
+      "bidNtceDtlUrl": "https://www.g2b.go.kr/link/PNPE027_01/single/?bidPbancNo=R26BK01529634&bidPbancOrd=000",
+      "ntceInsttOfclNm": "최민태",
+      "ntceInsttOfclTelNo": "***********",
+      "sucsfbidMthdNm": "적격심사제-관리규정외 수기심사(총점입력)",
+      "first_seen_date": "2026-05-18",
+      "last_seen_date": "2026-05-18",
+      "source": "g2b",
+      "matched_keywords": [
+        "AI"
+      ],
+      "_relevance_score": 3,
+      "_relevance_reason": "AI 기반 시스템 구축·현장 실증 관련으로 부분 관련",
+      "_bidClseDt_iso": "2026-05-26T10:00:00+09:00",
+      "_hours_remaining": 185.1
+    },
+    {
       "bidNtceNo": "R26BK01515966",
       "bidNtceOrd": "000",
       "bidNtceNm": "[긴급] 2026 남부 초중고 AI·디지털 기반 역량 강화 교원 직무연수 위탁 용역",
@@ -5871,6 +5870,42 @@
       ],
       "_relevance_score": 5,
       "_relevance_reason": "AI 기반 플랫폼 구축 감리로 AI 시스템 구축·컨설팅에 매우 관련",
+      "_bidClseDt_iso": "2026-05-27T10:00:00+09:00",
+      "_hours_remaining": 209.1
+    },
+    {
+      "bidNtceNo": "R26BK01512858",
+      "bidNtceOrd": "001",
+      "bidNtceNm": "소방안전 AI·빅데이터 사용자 중심 활용전략 수립 정책연구",
+      "ntceInsttNm": "소방청",
+      "ntceInsttCd": "1661000",
+      "dminsttNm": "소방청",
+      "dminsttCd": "1661000",
+      "bidMethdNm": "전자입찰",
+      "cntrctCnclsMthdNm": "제한경쟁",
+      "ntceKindNm": "변경공고",
+      "bsnsDivNm": "",
+      "srvceDivNm": "일반용역",
+      "ppswGnrlSrvceYn": "N",
+      "bidNtceDt": "2026-05-18 16:54:10",
+      "bidBeginDt": "2026-05-21 10:00:00",
+      "bidClseDt": "2026-05-27 10:00:00",
+      "opengDt": "2026-05-27 11:00:00",
+      "asignBdgtAmt": "30000000",
+      "presmptPrce": "27272727",
+      "bidNtceDtlUrl": "https://www.g2b.go.kr/link/PNPE027_01/single/?bidPbancNo=R26BK01512858&bidPbancOrd=001",
+      "ntceInsttOfclNm": "신정필",
+      "ntceInsttOfclTelNo": "044-205-7052",
+      "sucsfbidMthdNm": "협상에의한계약-협상에 의한 낙찰자 결정",
+      "first_seen_date": "2026-05-18",
+      "last_seen_date": "2026-05-18",
+      "source": "g2b",
+      "matched_keywords": [
+        "AI",
+        "빅데이터"
+      ],
+      "_relevance_score": 5,
+      "_relevance_reason": "AI·빅데이터 활용 전략 정책연구로 AI 컨설팅·연구와 직접 연관",
       "_bidClseDt_iso": "2026-05-27T10:00:00+09:00",
       "_hours_remaining": 209.1
     },
