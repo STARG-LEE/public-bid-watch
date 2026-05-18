@@ -6425,6 +6425,13 @@
     "score": 0,
     "scored_at": "2026-05-18T16:36:54+09:00"
   },
+  "R26BK01528023-000": {
+    "model": "gpt-5-mini",
+    "provider": "openai",
+    "reason": "소상공인 대상 AI 지원 서비스로 AI 컨설팅·시스템 구축 관련",
+    "score": 4,
+    "scored_at": "2026-05-18T17:22:13+09:00"
+  },
   "R26BK01528024-000": {
     "model": "gpt-5-mini",
     "provider": "openai",
@@ -6509,6 +6516,13 @@
     "score": 4,
     "scored_at": "2026-05-18T16:36:54+09:00"
   },
+  "R26BK01529140-000": {
+    "model": "gpt-5-mini",
+    "provider": "openai",
+    "reason": "기상·기후테크는 AI·데이터와 일부 연관 가능하나 주제 불일치",
+    "score": 2,
+    "scored_at": "2026-05-18T17:22:13+09:00"
+  },
   "R26BK01529158-000": {
     "model": "gpt-5-mini",
     "provider": "openai",
@@ -6550,5 +6564,12 @@
     "reason": "AI 기반 시스템 구축·현장 실증 관련으로 부분 관련",
     "score": 3,
     "scored_at": "2026-05-18T16:55:11+09:00"
+  },
+  "R26BK01529816-000": {
+    "model": "gpt-5-mini",
+    "provider": "openai",
+    "reason": "AI 기반 보안패턴 개발은 AI 시스템 구축·연구와 직접 관련",
+    "score": 5,
+    "scored_at": "2026-05-18T17:22:13+09:00"
   }
 }
