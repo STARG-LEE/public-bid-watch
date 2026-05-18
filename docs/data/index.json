@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-18T17:05:03+09:00",
+  "generated_at": "2026-05-18T17:06:54+09:00",
   "config": {
     "keywords": [
       "AI",
@@ -39,10 +39,10 @@
     }
   },
   "stats": {
-    "open": 451,
+    "open": 452,
     "closing_soon": 131,
     "closed": 284,
-    "total": 866,
+    "total": 867,
     "by_source": {
       "closing_soon": {
         "g2b": 92,
@@ -51,7 +51,7 @@
       },
       "open": {
         "bizinfo": 221,
-        "g2b": 209,
+        "g2b": 210,
         "iris": 3,
         "nrf": 1,
         "iitp": 17
@@ -60,7 +60,7 @@
         "g2b": 284
       },
       "total": {
-        "g2b": 585,
+        "g2b": 586,
         "bizinfo": 258,
         "iris": 5,
         "nrf": 1,
@@ -11470,6 +11470,41 @@
       ],
       "_relevance_score": 4,
       "_relevance_reason": "피지컬AI·디지털트윈 XR 교육콘텐츠로 AI 교육·시스템 구축과 관련",
+      "_bidClseDt_iso": "2026-06-30T10:00:00+09:00",
+      "_hours_remaining": 1024.9
+    },
+    {
+      "bidNtceNo": "R26BK01528024",
+      "bidNtceOrd": "000",
+      "bidNtceNm": "HTDream 인공지능(BION GPT) 서비스 고도화 사업",
+      "ntceInsttNm": "한국보건산업진흥원",
+      "ntceInsttCd": "B551174",
+      "dminsttNm": "한국보건산업진흥원",
+      "dminsttCd": "B551174",
+      "bidMethdNm": "전자입찰",
+      "cntrctCnclsMthdNm": "제한경쟁",
+      "ntceKindNm": "등록공고",
+      "bsnsDivNm": "",
+      "srvceDivNm": "일반용역",
+      "ppswGnrlSrvceYn": "N",
+      "bidNtceDt": "2026-05-18 17:03:04",
+      "bidBeginDt": "2026-06-26 10:00:00",
+      "bidClseDt": "2026-06-30 10:00:00",
+      "opengDt": "2026-06-30 11:00:00",
+      "asignBdgtAmt": "100000000",
+      "presmptPrce": "90909091",
+      "bidNtceDtlUrl": "https://www.g2b.go.kr/link/PNPE027_01/single/?bidPbancNo=R26BK01528024&bidPbancOrd=000",
+      "ntceInsttOfclNm": "박성희",
+      "ntceInsttOfclTelNo": "043-713-8356",
+      "sucsfbidMthdNm": "협상에의한계약-협상에 의한 낙찰자 결정(SW사업)",
+      "first_seen_date": "2026-05-18",
+      "last_seen_date": "2026-05-18",
+      "source": "g2b",
+      "matched_keywords": [
+        "인공지능"
+      ],
+      "_relevance_score": 5,
+      "_relevance_reason": "의료 분야 BION GPT 고도화로 생성형 AI·디지털헬스 핵심 관련",
       "_bidClseDt_iso": "2026-06-30T10:00:00+09:00",
       "_hours_remaining": 1024.9
     },
