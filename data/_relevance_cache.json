@@ -6117,6 +6117,13 @@
     "score": 5,
     "scored_at": "2026-05-16T10:16:16+09:00"
   },
+  "R26BK01525229-000": {
+    "model": "gpt-5-mini",
+    "provider": "openai",
+    "reason": "AI OCR 구축 프로젝트로 AI 시스템·컨설팅과 관련",
+    "score": 4,
+    "scored_at": "2026-05-18T10:27:54+09:00"
+  },
   "R26BK01525238-000": {
     "model": "gpt-5-mini",
     "provider": "openai",
@@ -6256,5 +6263,47 @@
     "reason": "애니메이션 3D 모델링 제작으로 AI·의료·데이터 분야와 무관",
     "score": 0,
     "scored_at": "2026-05-16T10:16:16+09:00"
+  },
+  "R26BK01527363-000": {
+    "model": "gpt-5-mini",
+    "provider": "openai",
+    "reason": "병원 AI 전담 조직 운영계획 수립으로 AI·디지털헬스 연관",
+    "score": 5,
+    "scored_at": "2026-05-18T10:27:54+09:00"
+  },
+  "R26BK01527415-000": {
+    "model": "gpt-5-mini",
+    "provider": "openai",
+    "reason": "빅데이터 플랫폼 및 시각화 구축으로 데이터 시스템 구축·분석 사업과 직접 연관",
+    "score": 5,
+    "scored_at": "2026-05-18T10:27:54+09:00"
+  },
+  "R26BK01527424-000": {
+    "model": "gpt-5-mini",
+    "provider": "openai",
+    "reason": "AI 학습 데이터셋·서비스 구축 관련 감리로 매우 적합",
+    "score": 5,
+    "scored_at": "2026-05-18T10:27:54+09:00"
+  },
+  "R26BK01527630-000": {
+    "model": "gpt-5-mini",
+    "provider": "openai",
+    "reason": "AI 인재양성 해외연수 캠프로 AI 교육·인재양성 분야에 직접적 관련",
+    "score": 5,
+    "scored_at": "2026-05-18T10:27:54+09:00"
+  },
+  "R26BK01527645-000": {
+    "model": "gpt-5-mini",
+    "provider": "openai",
+    "reason": "AI 인재양성(리더 양성) 교육으로 사용자 관심 분야와 부합",
+    "score": 5,
+    "scored_at": "2026-05-18T10:27:54+09:00"
+  },
+  "R26BK01527646-000": {
+    "model": "gpt-5-mini",
+    "provider": "openai",
+    "reason": "건축 리모델링 안전진단으로 AI·의료 등 관심분야와 무관",
+    "score": 0,
+    "scored_at": "2026-05-18T10:27:54+09:00"
   }
 }
