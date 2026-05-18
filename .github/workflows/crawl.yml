@@ -1,4 +1,4 @@
-name: 나라장터 용역 공고 수집
+name: 공공 공고 수집 (나라장터 · 기업마당)
 
 on:
   schedule:
@@ -46,7 +46,7 @@ jobs:
       - name: 의존성 설치
         run: pip install -r requirements.txt
 
-      - name: 공고 수집
+      - name: 나라장터 공고 수집
         env:
           NARA_SERVICE_KEY: ${{ secrets.NARA_SERVICE_KEY }}
           TZ: Asia/Seoul
@@ -56,6 +56,14 @@ jobs:
           else
             python scripts/crawl.py
           fi
+
+      - name: 기업마당 공고 수집
+        env:
+          BIZINFO_API_KEY: ${{ secrets.BIZINFO_API_KEY }}
+          TZ: Asia/Seoul
+        # 키 없는 환경에서도 워크플로우가 죽지 않도록 continue-on-error
+        continue-on-error: true
+        run: python scripts/crawl_bizinfo.py
 
       - name: 관련성 점수 평가 (LLM)
         env:

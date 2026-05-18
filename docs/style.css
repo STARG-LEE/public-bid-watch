@@ -144,6 +144,67 @@ main { padding: 28px 0 48px; }
   border-color: var(--accent);
 }
 
+.source-filter {
+  margin-bottom: 10px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+.source-filter-inner {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+.source-chip {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  padding: 5px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  font-family: inherit;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: all 0.12s;
+}
+.source-chip:hover { color: var(--text); border-color: var(--accent); }
+.source-chip.active {
+  background: var(--accent-dim);
+  border-color: var(--accent-dim);
+  color: white;
+}
+.source-chip .count {
+  opacity: 0.75;
+  margin-left: 5px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.source-badge {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  border: 1px solid transparent;
+}
+.source-badge.src-g2b {
+  background: rgba(88, 166, 255, 0.15);
+  color: var(--accent);
+  border-color: rgba(88, 166, 255, 0.35);
+}
+.source-badge.src-bizinfo {
+  background: rgba(240, 136, 62, 0.15);
+  color: var(--warn);
+  border-color: rgba(240, 136, 62, 0.35);
+}
+.div-badge.cat {
+  background: rgba(139, 148, 158, 0.15);
+  color: var(--muted);
+  border-color: rgba(139, 148, 158, 0.3);
+}
+
 .kw-filter {
   margin-bottom: 14px;
   overflow-x: auto;

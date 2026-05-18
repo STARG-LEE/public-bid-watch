@@ -5,8 +5,11 @@
     tab: "closing_soon",
     query: "",
     selectedKeyword: "__all__",
+    selectedSource: "__all__",   // __all__ | g2b | bizinfo
     data: null,
   };
+
+  const SOURCE_LABEL = { g2b: "나라장터", bizinfo: "기업마당" };
 
   const $ = (sel) => document.querySelector(sel);
 
@@ -46,7 +49,8 @@
   }
 
   function buildBidUrl(item) {
-    if (item.bidNtceDtlUrl) return item.bidNtceDtlUrl;
+    if (item.url) return item.url;                       // bizinfo 정규화 필드
+    if (item.bidNtceDtlUrl) return item.bidNtceDtlUrl;   // g2b
     if (item.bidNtceNo) {
       return `https://www.g2b.go.kr:8101/ep/invitation/publish/bidInfoDtl.do?bidno=${encodeURIComponent(item.bidNtceNo)}&bidseq=${encodeURIComponent(item.bidNtceOrd || "")}`;
     }
@@ -57,21 +61,31 @@
     const hours = item._hours_remaining;
     const remaining = fmtRemaining(hours);
     const url = buildBidUrl(item);
-    const title = item.bidNtceNm || "(제목 없음)";
-    const org = item.ntceInsttNm || item.dminsttNm || "";
-    const demander = item.dminsttNm && item.dminsttNm !== item.ntceInsttNm ? item.dminsttNm : "";
+    const source = item.source || "g2b";
+    const title = item.title || item.bidNtceNm || "(제목 없음)";
+    const org = item.org || item.ntceInsttNm || item.dminsttNm || "";
+    const demander = source === "g2b"
+      ? (item.dminsttNm && item.dminsttNm !== item.ntceInsttNm ? item.dminsttNm : "")
+      : (item.exec_org && item.exec_org !== item.org ? item.exec_org : "");
     const budget = fmtKrw(item.asignBdgtAmt) || fmtKrw(item.presmptPrce);
     const method = [item.bidMethdNm, item.cntrctCnclsMthdNm].filter(Boolean).join(" / ");
     const kind = item.ntceKindNm && item.ntceKindNm !== "일반" ? item.ntceKindNm : "";
     const matched = Array.isArray(item.matched_keywords) ? item.matched_keywords : [];
     const srvceDiv = item.srvceDivNm || "";
     const divCls = srvceDiv === "기술용역" ? "tech" : srvceDiv === "일반용역" ? "general" : "";
+    const category = item.category || "";
     const score = item._relevance_score;
     const reason = item._relevance_reason || "";
     const scoreCls = score >= 4 ? "high" : score >= 3 ? "mid" : "low";
     const scoreHtml = (typeof score === "number")
       ? `<span class="score-badge ${scoreCls}" title="${escapeHtml(reason)}">★${score}</span>`
       : "";
+    const sourceLabel = SOURCE_LABEL[source] || source;
+    const sourceHtml = `<span class="source-badge src-${source}">${escapeHtml(sourceLabel)}</span>`;
+    const closeDtDisplay = item.bidClseDt || item.close_dt_raw || "";
+    const idDisplay = source === "g2b"
+      ? `${escapeHtml(item.bidNtceNo || "")}${item.bidNtceOrd ? "-" + escapeHtml(item.bidNtceOrd) : ""}`
+      : escapeHtml(item.source_id || "");
 
     let cardCls = "card";
     if (remaining.cls === "danger" || remaining.cls === "warn") cardCls += " soon";
@@ -81,24 +95,30 @@
       ? `<div class="matched-keywords">${matched.map(k => `<span class="kw">${escapeHtml(k)}</span>`).join("")}</div>`
       : "";
 
+    const demanderLabel = source === "g2b" ? "수요기관" : "수행기관";
+    const orgLabel = source === "g2b" ? "공고기관" : "소관기관";
+    const idLabel = source === "g2b" ? "공고번호" : "공고ID";
+
     return `
       <article class="${cardCls}">
         <h3 class="card-title"><a href="${url}" target="_blank" rel="noopener">${escapeHtml(title)}</a></h3>
         <div class="card-meta">
+          ${sourceHtml}
           ${scoreHtml}
           ${srvceDiv ? `<span class="div-badge ${divCls}">${escapeHtml(srvceDiv)}</span>` : ""}
+          ${category && source === "bizinfo" ? `<span class="div-badge cat">${escapeHtml(category)}</span>` : ""}
           ${kind ? `<span class="tag">${escapeHtml(kind)}</span>` : ""}
-          ${org ? `<span><strong>공고기관</strong> ${escapeHtml(org)}</span>` : ""}
-          ${demander ? `<span><strong>수요기관</strong> ${escapeHtml(demander)}</span>` : ""}
+          ${org ? `<span><strong>${orgLabel}</strong> ${escapeHtml(org)}</span>` : ""}
+          ${demander ? `<span><strong>${demanderLabel}</strong> ${escapeHtml(demander)}</span>` : ""}
           ${method ? `<span><strong>입찰방식</strong> ${escapeHtml(method)}</span>` : ""}
-          <span><strong>공고번호</strong> ${escapeHtml(item.bidNtceNo || "")}${item.bidNtceOrd ? "-" + escapeHtml(item.bidNtceOrd) : ""}</span>
+          ${idDisplay ? `<span><strong>${idLabel}</strong> ${idDisplay}</span>` : ""}
         </div>
         ${reason ? `<div class="relevance-reason">${escapeHtml(reason)}</div>` : ""}
         ${matchedHtml}
         <div class="card-bottom">
           <span class="remaining ${remaining.cls}">${remaining.text}</span>
           <span class="budget">
-            ${item.bidClseDt ? `마감 <strong>${escapeHtml(item.bidClseDt)}</strong>` : ""}
+            ${closeDtDisplay ? `마감 <strong>${escapeHtml(closeDtDisplay)}</strong>` : ""}
             ${budget ? ` · 예산 <strong>${budget}원</strong>` : ""}
           </span>
         </div>
@@ -125,15 +145,22 @@
     const bucket = state.data[state.tab] || [];
     const q = state.query.trim().toLowerCase();
     const kw = state.selectedKeyword;
+    const src = state.selectedSource;
 
     const filtered = bucket.filter((it) => {
+      if (src && src !== "__all__") {
+        if ((it.source || "g2b") !== src) return false;
+      }
       if (kw && kw !== "__all__") {
         const matched = Array.isArray(it.matched_keywords) ? it.matched_keywords : [];
         if (!matched.includes(kw)) return false;
       }
       if (q) {
-        const hay = [it.bidNtceNm, it.ntceInsttNm, it.dminsttNm, it.bsnsDivNm]
-          .filter(Boolean).join(" ").toLowerCase();
+        const hay = [
+          it.title, it.bidNtceNm,
+          it.org, it.ntceInsttNm, it.dminsttNm, it.exec_org,
+          it.bsnsDivNm, it.summary, it.category,
+        ].filter(Boolean).join(" ").toLowerCase();
         if (!hay.includes(q)) return false;
       }
       return true;
@@ -157,8 +184,11 @@
     const container = $("#kw-filter");
     if (!state.data || !container) return;
 
-    // 모든 버킷에서 키워드 카운트 집계 (현재 탭 기준)
-    const bucket = state.data[state.tab] || [];
+    // 현재 탭 + 출처 필터 적용된 부분집합에서 키워드 카운트
+    const src = state.selectedSource;
+    const bucket = (state.data[state.tab] || []).filter((it) =>
+      src === "__all__" ? true : (it.source || "g2b") === src,
+    );
     const counts = new Map();
     for (const it of bucket) {
       const kws = Array.isArray(it.matched_keywords) ? it.matched_keywords : [];
@@ -190,6 +220,13 @@
     $("#stat-open").textContent = d.stats?.open ?? "-";
     $("#stat-closed").textContent = d.stats?.closed ?? "-";
     $("#stat-total").textContent = d.stats?.total ?? "-";
+
+    // 출처별 카운트 (전체 통합 기준)
+    const bySrc = d.stats?.by_source?.total || {};
+    const cntG = $("#cnt-g2b");
+    const cntB = $("#cnt-bizinfo");
+    if (cntG) cntG.textContent = bySrc.g2b ?? 0;
+    if (cntB) cntB.textContent = bySrc.bizinfo ?? 0;
   }
 
   function bindEvents() {
@@ -205,6 +242,18 @@
     });
     $("#search").addEventListener("input", (e) => {
       state.query = e.target.value;
+      render();
+    });
+    // 출처 칩 클릭
+    $("#source-filter").addEventListener("click", (e) => {
+      const chip = e.target.closest(".source-chip");
+      if (!chip) return;
+      state.selectedSource = chip.dataset.source;
+      // 출처 바꾸면 키워드 선택은 초기화 (잘못된 조합 방지)
+      state.selectedKeyword = "__all__";
+      document.querySelectorAll("#source-filter .source-chip").forEach((c) => c.classList.remove("active"));
+      chip.classList.add("active");
+      buildKeywordFilter();
       render();
     });
     // 키워드 칩 클릭은 이벤트 위임으로 처리 (칩이 동적으로 재생성되므로)

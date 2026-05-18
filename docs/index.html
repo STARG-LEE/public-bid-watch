@@ -3,27 +3,27 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>나라장터 용역 공고 트래커</title>
-<meta name="description" content="공공데이터포털 입찰공고정보서비스 기반, AI·헬스케어·데이터 분야 입찰공고를 매일 자동 수집하는 대시보드. GPT-5 mini로 관련성 평가 적용.">
+<title>공공 공고 트래커 (나라장터 · 기업마당)</title>
+<meta name="description" content="나라장터(조달청)와 기업마당(중기부) 두 출처에서 AI·헬스케어·데이터 키워드로 매일 자동 수집하는 공공 공고 대시보드. GPT-5 mini로 관련성 평가 적용.">
 
 <!-- Favicon -->
 <link rel="icon" type="image/svg+xml" href="./favicon.svg">
 
 <!-- Open Graph (카카오톡, 페이스북, 슬랙 등) -->
 <meta property="og:type" content="website">
-<meta property="og:title" content="나라장터 용역 공고 트래커">
-<meta property="og:description" content="AI·헬스케어·데이터 분야 입찰공고를 매일 자동 수집. GPT-5 mini 관련성 평가 적용.">
+<meta property="og:title" content="공공 공고 트래커 (나라장터 · 기업마당)">
+<meta property="og:description" content="나라장터 용역 입찰공고 + 기업마당 지원사업 공고를 AI/헬스케어/데이터 키워드로 매일 자동 수집. GPT-5 mini 관련성 평가 적용.">
 <meta property="og:image" content="https://sdkparkforbi.github.io/nara-jangteo-watch/og-image.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:url" content="https://sdkparkforbi.github.io/nara-jangteo-watch/">
 <meta property="og:locale" content="ko_KR">
-<meta property="og:site_name" content="나라장터 용역 공고 트래커">
+<meta property="og:site_name" content="공공 공고 트래커 (나라장터 · 기업마당)">
 
 <!-- Twitter Card (X, 일부 메신저) -->
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="나라장터 용역 공고 트래커">
-<meta name="twitter:description" content="AI·헬스케어·데이터 분야 입찰공고를 매일 자동 수집. GPT-5 mini 관련성 평가 적용.">
+<meta name="twitter:title" content="공공 공고 트래커 (나라장터 · 기업마당)">
+<meta name="twitter:description" content="나라장터 용역 입찰공고 + 기업마당 지원사업 공고를 AI/헬스케어/데이터 키워드로 매일 자동 수집. GPT-5 mini 관련성 평가 적용.">
 <meta name="twitter:image" content="https://sdkparkforbi.github.io/nara-jangteo-watch/og-image.png">
 
 <link rel="stylesheet" href="./style.css">
@@ -31,8 +31,8 @@
 <body>
 <header>
   <div class="container">
-    <h1>나라장터 용역 공고 트래커</h1>
-    <p class="subtitle">공공데이터포털 입찰공고정보서비스를 기반으로 키워드에 매치되는 용역 공고를 매일 자동 수집합니다.</p>
+    <h1>공공 공고 트래커 (나라장터 · 기업마당)</h1>
+    <p class="subtitle">조달청 나라장터 용역 입찰공고 + 중소벤처기업부 기업마당 지원사업 공고를 키워드로 매일 자동 수집합니다.</p>
     <div class="meta" id="meta">
       <span class="chip" id="generated-at">갱신: -</span>
       <span class="chip" id="keywords">키워드: -</span>
@@ -57,6 +57,14 @@
     <input type="search" id="search" placeholder="공고명·기관으로 필터 (예: 구축, 국방부)">
   </section>
 
+  <section class="source-filter" aria-label="출처 필터">
+    <div class="source-filter-inner" id="source-filter">
+      <button class="source-chip active" data-source="__all__">전체</button>
+      <button class="source-chip" data-source="g2b">나라장터 <span class="count" id="cnt-g2b">-</span></button>
+      <button class="source-chip" data-source="bizinfo">기업마당 <span class="count" id="cnt-bizinfo">-</span></button>
+    </div>
+  </section>
+
   <section class="kw-filter" aria-label="키워드 필터">
     <div class="kw-filter-inner" id="kw-filter">
       <button class="kw-chip active" data-kw="__all__">전체</button>
@@ -71,10 +79,16 @@
 <footer>
   <div class="container">
     <p>
-      데이터 출처: <a href="https://www.g2b.go.kr" target="_blank" rel="noopener">나라장터(국가종합전자조달)</a> ·
-      API: <a href="https://www.data.go.kr/data/15129394/openapi.do" target="_blank" rel="noopener">조달청 입찰공고정보서비스</a>
+      데이터 출처:
+      <a href="https://www.g2b.go.kr" target="_blank" rel="noopener">나라장터(조달청)</a> ·
+      <a href="https://www.bizinfo.go.kr" target="_blank" rel="noopener">기업마당(중기부)</a>
     </p>
-    <p class="tiny">이 페이지의 정보는 참고용이며 공식 공고 내용과 다를 수 있습니다. 입찰 전 반드시 나라장터 공식 공고를 확인하세요.</p>
+    <p>
+      API:
+      <a href="https://www.data.go.kr/data/15129394/openapi.do" target="_blank" rel="noopener">조달청 입찰공고정보서비스</a> ·
+      <a href="https://www.bizinfo.go.kr/apiDetail.do?id=bizinfoApi" target="_blank" rel="noopener">기업마당 지원사업정보 API</a>
+    </p>
+    <p class="tiny">이 페이지의 정보는 참고용이며 공식 공고 내용과 다를 수 있습니다. 입찰·신청 전 반드시 공식 공고를 확인하세요.</p>
   </div>
 </footer>
 

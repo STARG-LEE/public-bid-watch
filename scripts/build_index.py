@@ -72,19 +72,34 @@ def load_config() -> dict:
         return json.load(f)
 
 
-def iter_daily_files(keep_days: int) -> list[Path]:
+def iter_daily_files(keep_days: int) -> tuple[list[Path], list[Path]]:
+    """data/ 의 일별 파일을 g2b 와 bizinfo 로 분리해 반환.
+
+    g2b:     YYYY-MM-DD.json
+    bizinfo: bizinfo-YYYY-MM-DD.json
+    """
     if not DATA_DIR.exists():
-        return []
+        return [], []
     cutoff = (datetime.now(tz=KST) - timedelta(days=keep_days)).date()
-    kept: list[Path] = []
+    g2b: list[Path] = []
+    biz: list[Path] = []
     for p in sorted(DATA_DIR.glob("*.json")):
+        stem = p.stem
+        if stem.startswith("_"):
+            continue  # _relevance_cache.json 등 메타 파일
+        if stem.startswith("bizinfo-"):
+            date_str = stem[len("bizinfo-"):]
+            target = biz
+        else:
+            date_str = stem
+            target = g2b
         try:
-            file_date = datetime.strptime(p.stem, "%Y-%m-%d").date()
+            file_date = datetime.strptime(date_str, "%Y-%m-%d").date()
         except ValueError:
             continue
         if file_date >= cutoff:
-            kept.append(p)
-    return kept
+            target.append(p)
+    return g2b, biz
 
 
 def match_keywords(title: str, keywords: list[str], case_sensitive: bool) -> list[str]:
@@ -95,15 +110,14 @@ def match_keywords(title: str, keywords: list[str], case_sensitive: bool) -> lis
     return [kw for kw in keywords if (kw if case_sensitive else kw.lower()) in haystack]
 
 
-def merge_all(
+def merge_g2b(
     files: list[Path],
     keywords: list[str],
     case_sensitive: bool,
-    service_divs: list[str] | None = None,
-    relevance_cache: dict | None = None,
+    service_divs: list[str] | None,
+    relevance_cache: dict,
 ) -> list[dict]:
     div_set = set(service_divs) if service_divs else None
-    cache = relevance_cache or {}
     merged: dict[str, dict] = {}
     for path in files:
         try:
@@ -117,20 +131,60 @@ def merge_all(
                 div = str(item.get("srvceDivNm") or "").strip()
                 if div not in div_set:
                     continue
-            key = f"{item.get('bidNtceNo')}-{item.get('bidNtceOrd')}"
+            bid_no = item.get("bidNtceNo")
+            bid_ord = item.get("bidNtceOrd")
+            key = f"g2b:{bid_no}-{bid_ord}"
             merged_item = dict(item)
             existing_seen = merged.get(key, {}).get("first_seen_date", collected_at)
             merged_item["first_seen_date"] = (
                 existing_seen if existing_seen < collected_at else collected_at
             )
             merged_item["last_seen_date"] = collected_at
+            merged_item["source"] = "g2b"
             merged_item["matched_keywords"] = match_keywords(
                 str(item.get("bidNtceNm") or ""), keywords, case_sensitive,
             )
-            score_entry = cache.get(key)
+            # 관련성 캐시는 g2b 키 (bidNtceNo-bidNtceOrd) 로 저장돼 있음
+            score_entry = relevance_cache.get(f"{bid_no}-{bid_ord}")
             if score_entry:
                 merged_item["_relevance_score"] = score_entry.get("score")
                 merged_item["_relevance_reason"] = score_entry.get("reason", "")
+            merged[key] = merged_item
+    return list(merged.values())
+
+
+def merge_bizinfo(
+    files: list[Path],
+    keywords: list[str],
+    case_sensitive: bool,
+) -> list[dict]:
+    merged: dict[str, dict] = {}
+    for path in files:
+        try:
+            with path.open(encoding="utf-8") as f:
+                payload = json.load(f)
+        except (json.JSONDecodeError, OSError):
+            continue
+        collected_at = payload.get("date") or path.stem.replace("bizinfo-", "")
+        for item in payload.get("items", []):
+            sid = item.get("source_id") or item.get("pblancId")
+            if not sid:
+                continue
+            key = f"bizinfo:{sid}"
+            merged_item = dict(item)
+            existing_seen = merged.get(key, {}).get("first_seen_date", collected_at)
+            merged_item["first_seen_date"] = (
+                existing_seen if existing_seen < collected_at else collected_at
+            )
+            merged_item["last_seen_date"] = collected_at
+            merged_item["source"] = "bizinfo"
+            # bizinfo 는 crawler 에서 이미 matched_keywords 채워두지만,
+            # 키워드 설정이 바뀐 경우를 대비해 여기서 한 번 더 재계산.
+            title = str(item.get("title") or item.get("bidNtceNm") or "")
+            summary = str(item.get("summary") or "")
+            merged_item["matched_keywords"] = match_keywords(
+                title + " " + summary, keywords, case_sensitive,
+            )
             merged[key] = merged_item
     return list(merged.values())
 
@@ -220,8 +274,8 @@ def main() -> int:
     rf_enabled = bool(rf.get("enabled", False))
     min_score = int(rf.get("min_score", 0)) if rf_enabled else None
 
-    files = iter_daily_files(keep_days)
-    print(f"사용할 일별 파일: {len(files)}개")
+    g2b_files, biz_files = iter_daily_files(keep_days)
+    print(f"g2b 일별 파일: {len(g2b_files)}개 / bizinfo 파일: {len(biz_files)}개")
     if service_divs:
         print(f"용역구분 화이트리스트(srvceDivNm): {service_divs}")
 
@@ -229,33 +283,45 @@ def main() -> int:
     if rf_enabled:
         print(f"관련성 캐시: {len(cache)}건 / min_score={min_score}")
 
-    merged = merge_all(files, keywords, case_sensitive, service_divs, cache)
-    print(f"고유 공고 총합 (관련성 필터 전): {len(merged)}건")
+    g2b_items = merge_g2b(g2b_files, keywords, case_sensitive, service_divs, cache)
+    biz_items = merge_bizinfo(biz_files, keywords, case_sensitive)
+    print(f"g2b: {len(g2b_items)}건 / bizinfo: {len(biz_items)}건")
 
-    # 관련성 필터 적용 (점수 없는 항목은 통과시킴 — 실패해도 데이터를 잃지 않음)
+    # 관련성 필터는 캐시 기반 → 현재 g2b 만 평가 대상 (bizinfo 는 캐시 없으므로 전부 통과)
     skipped_low = 0
     skipped_unscored = 0
     if rf_enabled and min_score is not None:
         kept: list[dict] = []
-        for it in merged:
+        for it in g2b_items:
             sc = it.get("_relevance_score")
             if sc is None:
                 kept.append(it)
-                skipped_unscored += 1  # 통계용 — 통과는 시킴
+                skipped_unscored += 1
                 continue
             if sc < min_score:
                 skipped_low += 1
                 continue
             kept.append(it)
-        merged = kept
-        print(f"관련성 필터 적용 후: {len(merged)}건 (저점수 제외 {skipped_low}, 미평가 통과 {skipped_unscored})")
+        g2b_items = kept
+        print(f"관련성 필터 적용 후 (g2b): {len(g2b_items)}건 (저점수 제외 {skipped_low}, 미평가 통과 {skipped_unscored})")
 
-    # 같은 bidNtceNo 내 최신 차수만 남기기 (재제출/취소공고 정리)
-    merged, removed_dup = dedup_by_bid_no(merged)
+    # 같은 bidNtceNo 내 최신 차수만 — g2b 만 적용
+    g2b_items, removed_dup = dedup_by_bid_no(g2b_items)
     if removed_dup > 0:
-        print(f"중복 차수 제거 후: {len(merged)}건 (구 차수 {removed_dup}건 제거)")
+        print(f"g2b 중복 차수 제거 후: {len(g2b_items)}건 (구 차수 {removed_dup}건 제거)")
+
+    merged = g2b_items + biz_items
+    print(f"최종 통합: {len(merged)}건 (g2b {len(g2b_items)} + bizinfo {len(biz_items)})")
 
     open_list, soon_list, closed_list = classify(merged)
+
+    # 소스별 통계 (현재 탭이 아닌 전체 기준)
+    def count_source(items: list[dict]) -> dict[str, int]:
+        out: dict[str, int] = {}
+        for it in items:
+            s = it.get("source", "g2b")
+            out[s] = out.get(s, 0) + 1
+        return out
 
     payload = {
         "generated_at": datetime.now(tz=KST).isoformat(timespec="seconds"),
@@ -265,6 +331,7 @@ def main() -> int:
             "service_divs": service_divs,
             "match_mode": cfg.get("match_mode", "any"),
             "keep_days": keep_days,
+            "sources": ["g2b", "bizinfo"],
             "relevance_filter": {
                 "enabled": rf_enabled,
                 "min_score": min_score,
@@ -277,6 +344,12 @@ def main() -> int:
             "closing_soon": len(soon_list),
             "closed": len(closed_list),
             "total": len(merged),
+            "by_source": {
+                "closing_soon": count_source(soon_list),
+                "open": count_source(open_list),
+                "closed": count_source(closed_list),
+                "total": count_source(merged),
+            },
         },
         "closing_soon": soon_list,
         "open": open_list,
