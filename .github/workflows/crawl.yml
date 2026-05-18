@@ -27,8 +27,9 @@ permissions:
   id-token: write
 
 concurrency:
-  group: crawl
-  cancel-in-progress: false
+  # 같은 브랜치 동시 실행 막아서 데이터 파일 push race 방지
+  group: crawl-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   crawl:
@@ -102,14 +103,28 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # rebase 시 충돌 나면 우리 쪽(이번 실행 결과) 우선
+          git config pull.rebase true
+          git config rebase.autoStash true
           git add data/ docs/data/
           if git diff --cached --quiet; then
             echo "변경사항 없음 — 커밋 스킵"
-          else
-            STAMP=$(TZ=Asia/Seoul date '+%Y-%m-%d %H:%M')
-            git commit -m "chore(data): 공고 수집 ${STAMP} KST"
-            git push
+            exit 0
           fi
+          STAMP=$(TZ=Asia/Seoul date '+%Y-%m-%d %H:%M')
+          git commit -m "chore(data): 공고 수집 ${STAMP} KST"
+          # race condition 대비 최대 3회 rebase 재시도
+          for i in 1 2 3; do
+            if git push; then
+              echo "push 성공 (시도 $i)"
+              exit 0
+            fi
+            echo "push 충돌 — pull --rebase 후 재시도 ($i/3)"
+            # 데이터 충돌 시 우리(이번 실행 결과) 쪽 채택
+            git pull --rebase -X ours || git rebase --abort
+          done
+          echo "::error::push 3회 재시도 모두 실패"
+          exit 1
 
   deploy-pages:
     needs: crawl
