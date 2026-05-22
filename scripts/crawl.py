@@ -1,9 +1,13 @@
 """
-나라장터 용역 입찰공고 크롤러
+나라장터 용역 입찰공고 크롤러 (시나리오 인식 버전)
 
 공공데이터포털의 나라장터 입찰공고정보서비스에서 [나라장터검색조건에 의한 입찰공고용역조회]
-오퍼레이션(getBidPblancListInfoServcPPSSrch)을 사용하여 각 키워드별로 공고명 부분검색을
-수행하고, 결과를 합쳐 data/YYYY-MM-DD.json 에 저장한다.
+오퍼레이션(getBidPblancListInfoServcPPSSrch)을 사용하여,
+**모든 시나리오 키워드의 합집합**으로 공고명 부분검색을 수행하고
+결과를 합쳐 data/YYYY-MM-DD.json 에 저장한다.
+
+시나리오별 필터링(exclude_keywords, match_mode=all, relevance_filter)은
+build_index 단계에서 적용된다 (raw 데이터는 시나리오 공통).
 
 환경변수:
     NARA_SERVICE_KEY : data.go.kr 에서 발급받은 Decoding 인증키 (필수)
@@ -20,7 +24,6 @@ import json
 import os
 import sys
 import time
-from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -35,6 +38,9 @@ except Exception:
 ROOT = Path(__file__).resolve().parent.parent
 CONFIG_PATH = ROOT / "config.json"
 DATA_DIR = ROOT / "data"
+
+sys.path.insert(0, str(ROOT / "scripts"))
+from scenarios import GlobalConfig, load_scenarios, union_keywords  # noqa: E402
 
 
 def _load_dotenv(path: Path) -> None:
@@ -55,38 +61,6 @@ def _load_dotenv(path: Path) -> None:
 _load_dotenv(ROOT / ".env")
 
 
-@dataclass
-class Config:
-    keywords: list[str]
-    exclude_keywords: list[str]
-    service_divs: list[str]
-    lookback_days: int
-    match_mode: str
-    case_sensitive: bool
-    endpoint: str
-    operation: str
-    num_of_rows: int
-    max_pages: int
-
-    @classmethod
-    def load(cls, path: Path) -> "Config":
-        with path.open(encoding="utf-8") as f:
-            raw = json.load(f)
-        api = raw.get("api", {})
-        return cls(
-            keywords=[k.strip() for k in raw.get("keywords", []) if k and k.strip()],
-            exclude_keywords=[k.strip() for k in raw.get("exclude_keywords", []) if k and k.strip()],
-            service_divs=[v.strip() for v in raw.get("service_divs", []) if v and v.strip()],
-            lookback_days=int(raw.get("lookback_days", 1)),
-            match_mode=raw.get("match_mode", "any"),
-            case_sensitive=bool(raw.get("case_sensitive", False)),
-            endpoint=api.get("endpoint", "https://apis.data.go.kr/1230000/ad/BidPublicInfoService"),
-            operation=api.get("operation", "getBidPblancListInfoServcPPSSrch"),
-            num_of_rows=int(api.get("num_of_rows", 500)),
-            max_pages=int(api.get("max_pages", 20)),
-        )
-
-
 def now_kst() -> datetime:
     return datetime.now(tz=KST)
 
@@ -97,7 +71,7 @@ def fmt_api_dt(dt: datetime) -> str:
 
 
 def fetch_page(
-    cfg: Config,
+    cfg: GlobalConfig,
     service_key: str,
     begin: datetime,
     end: datetime,
@@ -105,11 +79,11 @@ def fetch_page(
     bid_ntce_nm: str = "",
 ) -> dict:
     """단일 페이지 조회. bid_ntce_nm 이 주어지면 공고명 부분검색으로 필터링."""
-    url = f"{cfg.endpoint.rstrip('/')}/{cfg.operation}"
+    url = f"{cfg.api_endpoint.rstrip('/')}/{cfg.api_operation}"
     params = {
         "serviceKey": service_key,
         "pageNo": page_no,
-        "numOfRows": cfg.num_of_rows,
+        "numOfRows": cfg.api_num_of_rows,
         "type": "json",
         "inqryDiv": 1,
         "inqryBgnDt": fmt_api_dt(begin),
@@ -170,26 +144,12 @@ def total_count(resp_json: dict) -> int:
         return 0
 
 
-def contains_kw(text: str, kw: str, case_sensitive: bool) -> bool:
-    if case_sensitive:
-        return kw in text
-    return kw.lower() in text.lower()
-
-
-def is_excluded(text: str, cfg: Config) -> bool:
-    return any(contains_kw(text, kw, cfg.case_sensitive) for kw in cfg.exclude_keywords)
-
-
-def passes_service_div(item: dict, cfg: Config) -> bool:
+def passes_service_div(item: dict, service_divs: list[str]) -> bool:
     """srvceDivNm(용역구분명) 화이트리스트 필터. 빈 리스트면 항상 통과."""
-    if not cfg.service_divs:
+    if not service_divs:
         return True
     val = str(item.get("srvceDivNm") or "").strip()
-    return val in cfg.service_divs
-
-
-def all_keywords_match(text: str, cfg: Config) -> bool:
-    return all(contains_kw(text, kw, cfg.case_sensitive) for kw in cfg.keywords)
+    return val in service_divs
 
 
 def normalize_item(item: dict) -> dict:
@@ -229,7 +189,7 @@ def normalize_item(item: dict) -> dict:
 
 
 def fetch_by_keyword(
-    cfg: Config,
+    cfg: GlobalConfig,
     service_key: str,
     begin: datetime,
     end: datetime,
@@ -238,7 +198,7 @@ def fetch_by_keyword(
     """특정 키워드(공백이면 전체)로 페이지를 끝까지 순회."""
     collected: list[dict] = []
     label = f"'{keyword}'" if keyword else "(전체)"
-    for page in range(1, cfg.max_pages + 1):
+    for page in range(1, cfg.api_max_pages + 1):
         print(f"    page {page} … ", end="", flush=True)
         data = fetch_page(cfg, service_key, begin, end, page, keyword)
         items = extract_items(data)
@@ -247,7 +207,7 @@ def fetch_by_keyword(
         if not items:
             break
         collected.extend(items)
-        if len(items) < cfg.num_of_rows or len(collected) >= tc:
+        if len(items) < cfg.api_num_of_rows or len(collected) >= tc:
             break
         time.sleep(0.3)
     print(f"  키워드 {label}: 원본 {len(collected)}건")
@@ -296,7 +256,9 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> int:
     args = parse_args()
-    cfg = Config.load(CONFIG_PATH)
+    cfg = GlobalConfig.load(CONFIG_PATH)
+    scenarios = load_scenarios(ROOT, cfg.scenarios_dir)
+    keywords = union_keywords(scenarios)
 
     service_key = os.environ.get("NARA_SERVICE_KEY", "").strip()
     if not service_key:
@@ -310,25 +272,17 @@ def main() -> int:
     begin = now - timedelta(days=max(days, 1))
     save_date = args.date or now.strftime("%Y-%m-%d")
 
-    print(f"엔드포인트: {cfg.endpoint}/{cfg.operation}")
+    print(f"엔드포인트: {cfg.api_endpoint}/{cfg.api_operation}")
     print(f"조회 범위 (KST): {begin:%Y-%m-%d %H:%M} ~ {end:%Y-%m-%d %H:%M}")
-    print(f"키워드({cfg.match_mode}): {cfg.keywords or '(없음 → 전체 조회)'}")
-    if cfg.exclude_keywords:
-        print(f"제외 키워드: {cfg.exclude_keywords}")
+    print(f"시나리오 {len(scenarios)}개: {[s.slug for s in scenarios]}")
+    print(f"키워드 합집합 ({len(keywords)}개): {keywords or '(없음 → 전체 조회)'}")
     if cfg.service_divs:
         print(f"용역구분 화이트리스트(srvceDivNm): {cfg.service_divs}")
     print()
 
-    # API 호출 전략:
-    #  - 키워드가 없으면 단일 호출 (전체)
-    #  - match_mode=any 이면 키워드별로 API 순회 후 병합 (부분검색 OR)
-    #  - match_mode=all 이면 첫 키워드로만 API 조회 후 로컬에서 나머지도 포함되는지 필터
-    if not cfg.keywords:
-        search_keywords = [""]
-    elif cfg.match_mode == "all":
-        search_keywords = [cfg.keywords[0]]
-    else:
-        search_keywords = cfg.keywords
+    # 모든 시나리오 키워드의 합집합을 OR 로 검색.
+    # 시나리오별 exclude_keywords/match_mode=all/관련성 필터는 build_index 에서 적용.
+    search_keywords = keywords if keywords else [""]
 
     merged_raw: dict[str, dict] = {}
     try:
@@ -352,18 +306,14 @@ def main() -> int:
         title = str(raw.get("bidNtceNm") or "")
         if not title:
             continue
-        if is_excluded(title, cfg):
-            continue
-        if not passes_service_div(raw, cfg):
+        if not passes_service_div(raw, cfg.service_divs):
             skipped_div += 1
-            continue
-        if cfg.match_mode == "all" and cfg.keywords and not all_keywords_match(title, cfg):
             continue
         filtered.append(normalize_item(raw))
 
     if cfg.service_divs:
         print(f"용역구분 필터 제외: {skipped_div}건")
-    print(f"최종 매치: {len(filtered)}건")
+    print(f"저장 대상: {len(filtered)}건")
 
     if args.dry_run:
         for it in filtered[:20]:

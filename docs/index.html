@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>공공 공고 트래커 (나라장터 · 기업마당)</title>
-<meta name="description" content="나라장터(조달청)와 기업마당(중기부) 두 출처에서 AI·헬스케어·데이터 키워드로 매일 자동 수집하는 공공 공고 대시보드. GPT-5 mini로 관련성 평가 적용.">
+<meta name="description" content="나라장터(조달청)와 기업마당(중기부) 등 다중 출처에서 시나리오별 키워드로 매일 자동 수집하는 공공 공고 대시보드. LLM 관련성 평가 적용.">
 
 <!-- Favicon -->
 <link rel="icon" type="image/svg+xml" href="./favicon.svg">
@@ -12,7 +12,7 @@
 <!-- Open Graph (카카오톡, 페이스북, 슬랙 등) -->
 <meta property="og:type" content="website">
 <meta property="og:title" content="공공 공고 트래커 (나라장터 · 기업마당)">
-<meta property="og:description" content="나라장터 용역 입찰공고 + 기업마당 지원사업 공고를 AI/헬스케어/데이터 키워드로 매일 자동 수집. GPT-5 mini 관련성 평가 적용.">
+<meta property="og:description" content="나라장터 + 기업마당 + R&D 공고를 시나리오별 키워드로 매일 자동 수집. LLM 관련성 평가 적용.">
 <meta property="og:image" content="https://starg-lee.github.io/public-bid-watch/og-image.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -23,7 +23,7 @@
 <!-- Twitter Card (X, 일부 메신저) -->
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="공공 공고 트래커 (나라장터 · 기업마당)">
-<meta name="twitter:description" content="나라장터 용역 입찰공고 + 기업마당 지원사업 공고를 AI/헬스케어/데이터 키워드로 매일 자동 수집. GPT-5 mini 관련성 평가 적용.">
+<meta name="twitter:description" content="나라장터 + 기업마당 + R&D 공고를 시나리오별 키워드로 매일 자동 수집. LLM 관련성 평가 적용.">
 <meta name="twitter:image" content="https://starg-lee.github.io/public-bid-watch/og-image.png">
 
 <link rel="stylesheet" href="./style.css">
@@ -32,7 +32,16 @@
 <header>
   <div class="container">
     <h1>공공 공고 트래커 (나라장터 · 기업마당)</h1>
-    <p class="subtitle">나라장터(조달청) · 기업마당(중기부) · IRIS(범부처 R&amp;D) · NRF(한국연구재단) · IITP(정보통신기획평가원) 5개 출처에서 키워드 매치 공고를 매일 자동 수집합니다.</p>
+    <p class="subtitle">나라장터(조달청) · 기업마당(중기부) · IRIS(범부처 R&amp;D) · NRF(한국연구재단) · IITP(정보통신기획평가원) 5개 출처에서 시나리오별 키워드 매치 공고를 매일 자동 수집합니다.</p>
+
+    <nav class="scenario-bar" aria-label="시나리오 선택">
+      <div class="scenario-bar-inner" id="scenario-bar">
+        <span class="scenario-loading">시나리오 로딩 중…</span>
+      </div>
+    </nav>
+
+    <p class="scenario-desc" id="scenario-desc"></p>
+
     <div class="meta" id="meta">
       <span class="chip" id="generated-at">갱신: -</span>
       <span class="chip" id="keywords">키워드: -</span>

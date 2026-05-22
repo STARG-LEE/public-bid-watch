@@ -1,15 +1,18 @@
 """
-data/*.json 에 쌓인 일별 수집 결과를 하나의 대시보드용 인덱스로 합친다.
+data/*.json 에 쌓인 일별 수집 결과를 시나리오별 대시보드 인덱스로 합친다.
 
 산출물:
-    docs/data/index.json
+    docs/data/scenarios.json
+        {"generated_at": ..., "scenarios": [{slug, title, description, stats}]}
+
+    docs/data/index-{slug}.json   (시나리오마다 한 개)
         {
           "generated_at": ...,
-          "config": {...},
-          "stats": {"open": N, "closing_soon": N, "closed": N, "total": N},
-          "open": [...],            # 아직 마감 안 된 공고 (마감 임박순)
-          "closing_soon": [...],    # 24시간 이내 마감
-          "closed": [...]           # 이미 마감 (최근순)
+          "scenario": {slug, title, description, keywords, match_mode, ...},
+          "stats": {"open": N, "closing_soon": N, "closed": N, "total": N, "by_source": {...}},
+          "closing_soon": [...],
+          "open": [...],
+          "closed": [...]
         }
 
 config.keep_days 보다 오래된 data/ 파일은 스킵한다.
@@ -17,6 +20,7 @@ config.keep_days 보다 오래된 data/ 파일은 스킵한다.
 from __future__ import annotations
 
 import json
+import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -29,15 +33,21 @@ except Exception:
 ROOT = Path(__file__).resolve().parent.parent
 CONFIG_PATH = ROOT / "config.json"
 DATA_DIR = ROOT / "data"
-CACHE_PATH = DATA_DIR / "_relevance_cache.json"
-OUT_PATH = ROOT / "docs" / "data" / "index.json"
+RELEVANCE_DIR = DATA_DIR / "_relevance"
+OUT_DIR = ROOT / "docs" / "data"
+
+sys.path.insert(0, str(ROOT / "scripts"))
+from scenarios import GlobalConfig, Scenario, load_scenarios  # noqa: E402
+
+SOON_THRESHOLD_DAYS = 7
 
 
-def load_relevance_cache() -> dict:
-    if not CACHE_PATH.exists():
+def load_relevance_cache(slug: str) -> dict:
+    path = RELEVANCE_DIR / f"{slug}.json"
+    if not path.exists():
         return {}
     try:
-        with CACHE_PATH.open(encoding="utf-8") as f:
+        with path.open(encoding="utf-8") as f:
             return json.load(f)
     except (json.JSONDecodeError, OSError):
         return {}
@@ -67,11 +77,6 @@ def parse_bid_dt(s: str) -> datetime | None:
     return None
 
 
-def load_config() -> dict:
-    with CONFIG_PATH.open(encoding="utf-8") as f:
-        return json.load(f)
-
-
 def iter_daily_files(keep_days: int) -> dict[str, list[Path]]:
     """data/ 의 일별 파일을 source 별로 분리해 반환.
 
@@ -79,6 +84,7 @@ def iter_daily_files(keep_days: int) -> dict[str, list[Path]]:
     bizinfo: bizinfo-YYYY-MM-DD.json
     iris:    iris-YYYY-MM-DD.json
     nrf:     nrf-YYYY-MM-DD.json
+    iitp:    iitp-YYYY-MM-DD.json
     """
     PREFIXES = {"bizinfo-": "bizinfo", "iris-": "iris", "nrf-": "nrf", "iitp-": "iitp"}
     out: dict[str, list[Path]] = {"g2b": [], "bizinfo": [], "iris": [], "nrf": [], "iitp": []}
@@ -113,13 +119,24 @@ def match_keywords(title: str, keywords: list[str], case_sensitive: bool) -> lis
     return [kw for kw in keywords if (kw if case_sensitive else kw.lower()) in haystack]
 
 
+def has_excluded(text: str, exclude_keywords: list[str], case_sensitive: bool) -> bool:
+    if not exclude_keywords:
+        return False
+    haystack = text if case_sensitive else text.lower()
+    return any((kw if case_sensitive else kw.lower()) in haystack for kw in exclude_keywords)
+
+
 def merge_g2b(
     files: list[Path],
-    keywords: list[str],
-    case_sensitive: bool,
-    service_divs: list[str] | None,
+    sc: Scenario,
+    service_divs: list[str],
     relevance_cache: dict,
 ) -> list[dict]:
+    """g2b 파일들에서 시나리오 키워드에 매치되는 항목만 모은다.
+
+    필터 순서: service_divs → matched_keywords 존재 → match_mode=all → exclude_keywords.
+    관련성 점수는 시나리오별 캐시에서 가져와 첨부 (필터는 호출자가 적용).
+    """
     div_set = set(service_divs) if service_divs else None
     merged: dict[str, dict] = {}
     for path in files:
@@ -134,6 +151,15 @@ def merge_g2b(
                 div = str(item.get("srvceDivNm") or "").strip()
                 if div not in div_set:
                     continue
+            title = str(item.get("bidNtceNm") or "")
+            matched = match_keywords(title, sc.keywords, sc.case_sensitive)
+            if sc.keywords and not matched:
+                continue
+            if sc.match_mode == "all" and sc.keywords and len(matched) != len(sc.keywords):
+                continue
+            if has_excluded(title, sc.exclude_keywords, sc.case_sensitive):
+                continue
+
             bid_no = item.get("bidNtceNo")
             bid_ord = item.get("bidNtceOrd")
             key = f"g2b:{bid_no}-{bid_ord}"
@@ -144,10 +170,7 @@ def merge_g2b(
             )
             merged_item["last_seen_date"] = collected_at
             merged_item["source"] = "g2b"
-            merged_item["matched_keywords"] = match_keywords(
-                str(item.get("bidNtceNm") or ""), keywords, case_sensitive,
-            )
-            # 관련성 캐시는 g2b 키 (bidNtceNo-bidNtceOrd) 로 저장돼 있음
+            merged_item["matched_keywords"] = matched
             score_entry = relevance_cache.get(f"{bid_no}-{bid_ord}")
             if score_entry:
                 merged_item["_relevance_score"] = score_entry.get("score")
@@ -158,12 +181,15 @@ def merge_g2b(
 
 def merge_simple_source(
     files: list[Path],
-    keywords: list[str],
-    case_sensitive: bool,
+    sc: Scenario,
     source_label: str,
     key_prefix: str,
 ) -> list[dict]:
-    """source_id 기반 단순 병합 (bizinfo/iris/nrf 공통 패턴)."""
+    """source_id 기반 단순 병합 (bizinfo/iris/nrf/iitp 공통).
+
+    시나리오 키워드를 (title + summary) 에 매칭하고, 매치 안 된 항목은 제외.
+    exclude_keywords / match_mode=all 도 동일 텍스트에 적용.
+    """
     merged: dict[str, dict] = {}
     for path in files:
         try:
@@ -176,6 +202,17 @@ def merge_simple_source(
             sid = item.get("source_id")
             if not sid:
                 continue
+            title = str(item.get("title") or item.get("bidNtceNm") or "")
+            summary = str(item.get("summary") or "")
+            text = title + " " + summary
+            matched = match_keywords(text, sc.keywords, sc.case_sensitive)
+            if sc.keywords and not matched:
+                continue
+            if sc.match_mode == "all" and sc.keywords and len(matched) != len(sc.keywords):
+                continue
+            if has_excluded(text, sc.exclude_keywords, sc.case_sensitive):
+                continue
+
             key = f"{key_prefix}:{sid}"
             merged_item = dict(item)
             existing_seen = merged.get(key, {}).get("first_seen_date", collected_at)
@@ -184,30 +221,19 @@ def merge_simple_source(
             )
             merged_item["last_seen_date"] = collected_at
             merged_item["source"] = source_label
-            title = str(item.get("title") or item.get("bidNtceNm") or "")
-            summary = str(item.get("summary") or "")
-            merged_item["matched_keywords"] = match_keywords(
-                title + " " + summary, keywords, case_sensitive,
-            )
+            merged_item["matched_keywords"] = matched
             merged[key] = merged_item
     return list(merged.values())
 
 
 def dedup_by_bid_no(items: list[dict]) -> tuple[list[dict], int]:
-    """같은 bidNtceNo 그룹에서 bidNtceOrd 가 가장 큰(최신 차수) 항목만 남긴다.
-
-    Returns:
-        (남은 항목 리스트, 제거된 항목 수)
-    """
-    # bidNtceNo 별로 가장 큰 차수의 항목을 추적
+    """같은 bidNtceNo 그룹에서 bidNtceOrd 가 가장 큰(최신 차수) 항목만 남긴다."""
     latest: dict[str, dict] = {}
     for it in items:
         bid_no = str(it.get("bidNtceNo") or "")
         if not bid_no:
-            # 공고번호 없는 항목은 그냥 통과 (방어적 처리)
             latest[f"_no_id_{id(it)}"] = it
             continue
-        # bidNtceOrd 는 보통 "000", "001" 같은 문자열 — 정수 비교 위해 변환
         try:
             ord_n = int(it.get("bidNtceOrd") or 0)
         except (ValueError, TypeError):
@@ -225,9 +251,6 @@ def dedup_by_bid_no(items: list[dict]) -> tuple[list[dict], int]:
     kept = list(latest.values())
     removed = len(items) - len(kept)
     return kept, removed
-
-
-SOON_THRESHOLD_DAYS = 7
 
 
 def classify(items: list[dict]) -> tuple[list[dict], list[dict], list[dict]]:
@@ -268,116 +291,144 @@ def classify(items: list[dict]) -> tuple[list[dict], list[dict], list[dict]]:
     return open_list, soon_list, closed_list
 
 
-def main() -> int:
-    cfg = load_config()
-    keep_days = int(cfg.get("keep_days", 60))
-    keywords = [k.strip() for k in cfg.get("keywords", []) if k and k.strip()]
-    case_sensitive = bool(cfg.get("case_sensitive", False))
-    service_divs = [v.strip() for v in cfg.get("service_divs", []) if v and v.strip()]
-    rf = cfg.get("relevance_filter") or {}
-    rf_enabled = bool(rf.get("enabled", False))
-    min_score = int(rf.get("min_score", 0)) if rf_enabled else None
+def count_source(items: list[dict]) -> dict[str, int]:
+    out: dict[str, int] = {}
+    for it in items:
+        s = it.get("source", "g2b")
+        out[s] = out.get(s, 0) + 1
+    return out
 
-    files_by_src = iter_daily_files(keep_days)
+
+def build_scenario(
+    sc: Scenario,
+    files_by_src: dict[str, list[Path]],
+    service_divs: list[str],
+) -> dict:
+    """단일 시나리오의 인덱스 payload 를 생성."""
+    cache = load_relevance_cache(sc.slug)
+    rf = sc.relevance_filter
+    print(f"\n[{sc.slug}] 키워드 {len(sc.keywords)}개 / 캐시 {len(cache)}건 / min_score={rf.min_score if rf.enabled else '-'}")
+
+    g2b_items = merge_g2b(files_by_src["g2b"], sc, service_divs, cache)
+    biz_items = merge_simple_source(files_by_src["bizinfo"], sc, "bizinfo", "bizinfo")
+    iris_items = merge_simple_source(files_by_src["iris"], sc, "iris", "iris")
+    nrf_items = merge_simple_source(files_by_src["nrf"], sc, "nrf", "nrf")
+    iitp_items = merge_simple_source(files_by_src["iitp"], sc, "iitp", "iitp")
     print(
-        "파일 수: "
-        + " / ".join(f"{k}={len(v)}" for k, v in files_by_src.items())
-    )
-    if service_divs:
-        print(f"용역구분 화이트리스트(srvceDivNm): {service_divs}")
-
-    cache = load_relevance_cache() if rf_enabled else {}
-    if rf_enabled:
-        print(f"관련성 캐시: {len(cache)}건 / min_score={min_score}")
-
-    g2b_items = merge_g2b(files_by_src["g2b"], keywords, case_sensitive, service_divs, cache)
-    biz_items = merge_simple_source(files_by_src["bizinfo"], keywords, case_sensitive, "bizinfo", "bizinfo")
-    iris_items = merge_simple_source(files_by_src["iris"], keywords, case_sensitive, "iris", "iris")
-    nrf_items = merge_simple_source(files_by_src["nrf"], keywords, case_sensitive, "nrf", "nrf")
-    iitp_items = merge_simple_source(files_by_src["iitp"], keywords, case_sensitive, "iitp", "iitp")
-    print(
-        f"g2b: {len(g2b_items)} / bizinfo: {len(biz_items)} / iris: {len(iris_items)} / "
-        f"nrf: {len(nrf_items)} / iitp: {len(iitp_items)}"
+        f"[{sc.slug}] 매치: g2b {len(g2b_items)} / bizinfo {len(biz_items)} / "
+        f"iris {len(iris_items)} / nrf {len(nrf_items)} / iitp {len(iitp_items)}"
     )
 
-    # 관련성 필터는 캐시 기반 → 현재 g2b 만 평가 대상 (bizinfo 는 캐시 없으므로 전부 통과)
+    # 관련성 필터는 g2b 만 (다른 소스는 캐시 없음 → 통과)
     skipped_low = 0
     skipped_unscored = 0
-    if rf_enabled and min_score is not None:
+    if rf.enabled and rf.min_score > 0:
         kept: list[dict] = []
         for it in g2b_items:
-            sc = it.get("_relevance_score")
-            if sc is None:
+            score = it.get("_relevance_score")
+            if score is None:
                 kept.append(it)
                 skipped_unscored += 1
                 continue
-            if sc < min_score:
+            if score < rf.min_score:
                 skipped_low += 1
                 continue
             kept.append(it)
         g2b_items = kept
-        print(f"관련성 필터 적용 후 (g2b): {len(g2b_items)}건 (저점수 제외 {skipped_low}, 미평가 통과 {skipped_unscored})")
+        print(
+            f"[{sc.slug}] 관련성 필터 후 g2b: {len(g2b_items)}건 "
+            f"(저점수 제외 {skipped_low}, 미평가 통과 {skipped_unscored})"
+        )
 
-    # 같은 bidNtceNo 내 최신 차수만 — g2b 만 적용
     g2b_items, removed_dup = dedup_by_bid_no(g2b_items)
     if removed_dup > 0:
-        print(f"g2b 중복 차수 제거 후: {len(g2b_items)}건 (구 차수 {removed_dup}건 제거)")
+        print(f"[{sc.slug}] g2b 중복 차수 제거: {removed_dup}건")
 
     merged = g2b_items + biz_items + iris_items + nrf_items + iitp_items
+    open_list, soon_list, closed_list = classify(merged)
     print(
-        f"최종 통합: {len(merged)}건 "
-        f"(g2b {len(g2b_items)} + bizinfo {len(biz_items)} + iris {len(iris_items)} + "
-        f"nrf {len(nrf_items)} + iitp {len(iitp_items)})"
+        f"[{sc.slug}] 최종: open={len(open_list)} soon={len(soon_list)} closed={len(closed_list)} "
+        f"total={len(merged)}"
     )
 
-    open_list, soon_list, closed_list = classify(merged)
-
-    # 소스별 통계 (현재 탭이 아닌 전체 기준)
-    def count_source(items: list[dict]) -> dict[str, int]:
-        out: dict[str, int] = {}
-        for it in items:
-            s = it.get("source", "g2b")
-            out[s] = out.get(s, 0) + 1
-        return out
+    stats = {
+        "open": len(open_list),
+        "closing_soon": len(soon_list),
+        "closed": len(closed_list),
+        "total": len(merged),
+        "by_source": {
+            "closing_soon": count_source(soon_list),
+            "open": count_source(open_list),
+            "closed": count_source(closed_list),
+            "total": count_source(merged),
+        },
+    }
 
     payload = {
         "generated_at": datetime.now(tz=KST).isoformat(timespec="seconds"),
-        "config": {
-            "keywords": cfg.get("keywords", []),
-            "exclude_keywords": cfg.get("exclude_keywords", []),
-            "service_divs": service_divs,
-            "match_mode": cfg.get("match_mode", "any"),
-            "keep_days": keep_days,
-            "sources": ["g2b", "bizinfo", "iris", "nrf", "iitp"],
+        "scenario": {
+            "slug": sc.slug,
+            "title": sc.title,
+            "description": sc.description,
+            "keywords": sc.keywords,
+            "exclude_keywords": sc.exclude_keywords,
+            "match_mode": sc.match_mode,
+            "case_sensitive": sc.case_sensitive,
             "relevance_filter": {
-                "enabled": rf_enabled,
-                "min_score": min_score,
-                "model": rf.get("model") if rf_enabled else None,
-                "provider": rf.get("provider") if rf_enabled else None,
+                "enabled": rf.enabled,
+                "min_score": rf.min_score if rf.enabled else None,
+                "model": rf.model if rf.enabled else None,
+                "provider": rf.provider if rf.enabled else None,
             },
         },
-        "stats": {
-            "open": len(open_list),
-            "closing_soon": len(soon_list),
-            "closed": len(closed_list),
-            "total": len(merged),
-            "by_source": {
-                "closing_soon": count_source(soon_list),
-                "open": count_source(open_list),
-                "closed": count_source(closed_list),
-                "total": count_source(merged),
-            },
+        "config": {
+            "service_divs": service_divs,
+            "sources": ["g2b", "bizinfo", "iris", "nrf", "iitp"],
         },
+        "stats": stats,
         "closing_soon": soon_list,
         "open": open_list,
         "closed": closed_list,
     }
+    return payload
 
-    OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
-    with OUT_PATH.open("w", encoding="utf-8") as f:
-        json.dump(payload, f, ensure_ascii=False, indent=2)
-    print(f"저장: {OUT_PATH.relative_to(ROOT)}")
-    print(f"  open={len(open_list)}  closing_soon={len(soon_list)}  closed={len(closed_list)}")
+
+def main() -> int:
+    cfg = GlobalConfig.load(CONFIG_PATH)
+    scenarios = load_scenarios(ROOT, cfg.scenarios_dir)
+    files_by_src = iter_daily_files(cfg.keep_days)
+    print(
+        "파일 수: " + " / ".join(f"{k}={len(v)}" for k, v in files_by_src.items())
+    )
+    if cfg.service_divs:
+        print(f"용역구분 화이트리스트(srvceDivNm): {cfg.service_divs}")
+    print(f"시나리오 {len(scenarios)}개: {[s.slug for s in scenarios]}")
+
+    OUT_DIR.mkdir(parents=True, exist_ok=True)
+    menu_entries: list[dict] = []
+    for sc in scenarios:
+        payload = build_scenario(sc, files_by_src, cfg.service_divs)
+        out_path = OUT_DIR / f"index-{sc.slug}.json"
+        with out_path.open("w", encoding="utf-8") as f:
+            json.dump(payload, f, ensure_ascii=False, indent=2)
+        print(f"[{sc.slug}] 저장: {out_path.relative_to(ROOT)}")
+        menu_entries.append({
+            "slug": sc.slug,
+            "title": sc.title,
+            "description": sc.description,
+            "keywords": sc.keywords,
+            "stats": payload["stats"],
+        })
+
+    menu = {
+        "generated_at": datetime.now(tz=KST).isoformat(timespec="seconds"),
+        "default_slug": scenarios[0].slug if scenarios else None,
+        "scenarios": menu_entries,
+    }
+    menu_path = OUT_DIR / "scenarios.json"
+    with menu_path.open("w", encoding="utf-8") as f:
+        json.dump(menu, f, ensure_ascii=False, indent=2)
+    print(f"\n메뉴 저장: {menu_path.relative_to(ROOT)} ({len(menu_entries)}개 시나리오)")
     return 0
 
 

@@ -1,0 +1,58 @@
+{
+  "generated_at": "2026-05-22T17:55:22+09:00",
+  "default_slug": "ai-finance",
+  "scenarios": [
+    {
+      "slug": "ai-finance",
+      "title": "AI · 디지털 헬스케어 · 금융",
+      "description": "AI/생성형 AI/LLM, 디지털 헬스케어, 의료·임상 데이터, 한국 주식·금융 데이터 관련 공고",
+      "keywords": [
+        "AI",
+        "인공지능",
+        "머신러닝",
+        "딥러닝",
+        "챗봇",
+        "빅데이터",
+        "모델링",
+        "모형",
+        "예측",
+        "전망",
+        "재무",
+        "금융",
+        "투자",
+        "연금"
+      ],
+      "stats": {
+        "open": 469,
+        "closing_soon": 141,
+        "closed": 394,
+        "total": 1004,
+        "by_source": {
+          "closing_soon": {
+            "g2b": 89,
+            "bizinfo": 50,
+            "iris": 2
+          },
+          "open": {
+            "bizinfo": 236,
+            "iris": 3,
+            "g2b": 210,
+            "nrf": 1,
+            "iitp": 19
+          },
+          "closed": {
+            "g2b": 380,
+            "bizinfo": 14
+          },
+          "total": {
+            "g2b": 679,
+            "bizinfo": 300,
+            "iris": 5,
+            "nrf": 1,
+            "iitp": 19
+          }
+        }
+      }
+    }
+  ]
+}
