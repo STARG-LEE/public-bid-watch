@@ -1,0 +1,164 @@
+name: 시나리오 제안 처리 (Issue → PR)
+
+# Issue 가 scenario-proposal 라벨로 열리거나 라벨이 새로 붙으면 트리거.
+# LLM 으로 시나리오 JSON 초안을 만들고 PR 을 자동 생성한다.
+on:
+  issues:
+    types: [opened, labeled]
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: "처리할 이슈 번호 (수동 재실행용)"
+        required: true
+        type: number
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: propose-${{ github.event.issue.number || github.event.inputs.issue_number }}
+  cancel-in-progress: false
+
+jobs:
+  propose:
+    runs-on: ubuntu-latest
+    # 라벨 트리거인 경우, scenario-proposal 라벨만 처리
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'issues' && (
+        (github.event.action == 'opened' && contains(github.event.issue.labels.*.name, 'scenario-proposal')) ||
+        (github.event.action == 'labeled' && github.event.label.name == 'scenario-proposal')
+      ))
+
+    steps:
+      - name: 레포 체크아웃 (main)
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: 이슈 정보 가져오기
+        id: issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_NUMBER: ${{ github.event.issue.number || github.event.inputs.issue_number }}
+        run: |
+          # API 로 이슈 본문/제목/작성자를 가져와서 파일로 dump
+          gh api "repos/${{ github.repository }}/issues/${ISSUE_NUMBER}" > /tmp/issue.json
+          jq -r '.body // ""' /tmp/issue.json > /tmp/issue_body.md
+          TITLE=$(jq -r '.title // ""' /tmp/issue.json)
+          AUTHOR=$(jq -r '.user.login // ""' /tmp/issue.json)
+          STATE=$(jq -r '.state' /tmp/issue.json)
+          echo "title=$TITLE" >> "$GITHUB_OUTPUT"
+          echo "author=$AUTHOR" >> "$GITHUB_OUTPUT"
+          echo "number=$ISSUE_NUMBER" >> "$GITHUB_OUTPUT"
+          echo "state=$STATE" >> "$GITHUB_OUTPUT"
+          echo "이슈 #${ISSUE_NUMBER}: $TITLE (by @$AUTHOR, state=$STATE)"
+          wc -c /tmp/issue_body.md
+
+      - name: Python 설치
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: 의존성 설치
+        run: pip install -r requirements.txt
+
+      - name: 시나리오 초안 생성 (LLM)
+        id: gen
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          python scripts/propose_scenario.py \
+            --issue-body-file /tmp/issue_body.md \
+            --issue-title "${{ steps.issue.outputs.title }}" \
+            --issue-author "${{ steps.issue.outputs.author }}" \
+            --issue-number "${{ steps.issue.outputs.number }}"
+
+      - name: PR 브랜치 생성
+        id: branch
+        env:
+          SLUG: ${{ steps.gen.outputs.slug }}
+          ISSUE_NUMBER: ${{ steps.issue.outputs.number }}
+        run: |
+          BRANCH="proposal/issue-${ISSUE_NUMBER}-${SLUG}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          git add scenarios/
+          if git diff --cached --quiet; then
+            echo "::error::시나리오 파일이 생성되지 않았습니다."
+            exit 1
+          fi
+          git commit -m "feat(scenario): ${SLUG} — closes #${ISSUE_NUMBER}"
+          git push -u origin "$BRANCH"
+          echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
+
+      - name: PR 생성
+        id: pr
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH: ${{ steps.branch.outputs.branch }}
+          SLUG: ${{ steps.gen.outputs.slug }}
+          TITLE: ${{ steps.gen.outputs.title }}
+          DESC: ${{ steps.gen.outputs.description }}
+          ISSUE_NUMBER: ${{ steps.issue.outputs.number }}
+          ISSUE_AUTHOR: ${{ steps.issue.outputs.author }}
+        run: |
+          BODY=$(cat <<EOF
+          ## 자동 생성된 시나리오 초안
+
+          제안: #${ISSUE_NUMBER} (by @${ISSUE_AUTHOR})
+
+          - **slug**: \`${SLUG}\`
+          - **title**: ${TITLE}
+          - **description**: ${DESC}
+
+          \`scenarios/${SLUG}.json\` 의 키워드/관련성 context 를 검토하고
+          필요하면 직접 수정해주세요. 머지하면 다음 크롤(매일 KST 08:30)부터
+          대시보드에 새 탭으로 추가됩니다.
+
+          ## 검토 포인트
+          - [ ] keywords 가 너무 좁거나 넓지 않은가
+          - [ ] exclude_keywords 가 적절한가 (자주 오탐될 단어가 있다면 추가)
+          - [ ] relevance_filter.context 가 관심 분야 / 무관 분야를 둘 다 명확히 서술하는가
+          - [ ] slug 가 다른 시나리오와 충돌하지 않는가
+
+          Closes #${ISSUE_NUMBER}
+          EOF
+          )
+          PR_URL=$(gh pr create \
+            --base main \
+            --head "$BRANCH" \
+            --title "feat(scenario): ${TITLE} (#${ISSUE_NUMBER})" \
+            --body "$BODY" \
+            --label "scenario-proposal")
+          echo "pr_url=$PR_URL" >> "$GITHUB_OUTPUT"
+          echo "생성된 PR: $PR_URL"
+
+      - name: 이슈에 PR 링크 댓글
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_NUMBER: ${{ steps.issue.outputs.number }}
+          PR_URL: ${{ steps.pr.outputs.pr_url }}
+          SLUG: ${{ steps.gen.outputs.slug }}
+        run: |
+          gh issue comment "$ISSUE_NUMBER" --body "🤖 시나리오 초안이 생성되었습니다: ${PR_URL}
+
+          관리자 검토·머지 후 다음 크롤부터 \`?scenario=${SLUG}\` 탭으로 노출됩니다."
+
+      - name: 실패 시 이슈에 에러 알림
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_NUMBER: ${{ steps.issue.outputs.number }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          gh issue comment "$ISSUE_NUMBER" --body "❌ 시나리오 초안 자동 생성에 실패했습니다.
+
+          로그: ${RUN_URL}
+
+          이슈 본문을 좀 더 자세히 작성하고 라벨을 다시 붙여 재시도하거나, 관리자가 수동으로 처리해주세요." || true
