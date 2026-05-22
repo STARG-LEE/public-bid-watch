@@ -7,16 +7,27 @@
 ## 구성
 
 ```
-├── config.json                 # 키워드/조회옵션 (여기만 수정하면 됨)
+├── config.json                 # 글로벌 설정 (API, service_divs, keep_days 등)
+├── scenarios/                  # 시나리오 정의 (주제별 키워드/관련성 context)
+│   └── ai-finance.json         # 예: AI·헬스케어·금융
 ├── scripts/
-│   ├── crawl.py                # API 호출 + 키워드 필터 → data/YYYY-MM-DD.json
-│   └── build_index.py          # data/*.json 병합 → docs/data/index.json
+│   ├── scenarios.py            # 시나리오 로딩 공통 모듈
+│   ├── crawl.py                # 모든 시나리오 키워드 합집합으로 수집 → data/YYYY-MM-DD.json
+│   ├── crawl_bizinfo.py        # 기업마당
+│   ├── crawl_iris.py           # 범부처 R&D
+│   ├── crawl_nrf.py            # 한국연구재단
+│   ├── crawl_iitp.py           # 정보통신기획평가원
+│   ├── score_relevance.py      # 시나리오별 LLM 관련성 평가 → data/_relevance/{slug}.json
+│   └── build_index.py          # 시나리오별 인덱스 생성 → docs/data/index-{slug}.json
 ├── data/                       # 날짜별 수집 원본 (자동 생성, 자동 커밋)
+│   └── _relevance/             # 시나리오별 점수 캐시
 ├── docs/                       # GitHub Pages 대시보드 (HTML/CSS/JS)
 │   ├── index.html
 │   ├── app.js
 │   ├── style.css
-│   └── data/index.json         # 대시보드가 읽는 병합 데이터
+│   └── data/
+│       ├── scenarios.json         # 시나리오 목록 (대시보드 메뉴)
+│       └── index-{slug}.json      # 시나리오별 병합 데이터
 ├── .github/workflows/crawl.yml # 매일 KST 08:30 자동 실행
 └── requirements.txt            # requests 만 필요
 ```
@@ -33,27 +44,60 @@
    `docs/data/index.json`으로 씁니다.
 5. 변경이 있으면 자동 커밋 후 GitHub Pages로 배포됩니다.
 
-## 키워드 변경 방법
+## 시나리오 추가/변경
 
-[`config.json`](config.json) 을 수정하고 push 하면 다음 크롤부터 반영됩니다.
+키워드와 관심 분야는 **시나리오 단위**로 묶입니다. 시나리오 = `scenarios/{slug}.json` 파일 하나.
+대시보드 상단의 시나리오 탭으로 전환되며, `?scenario={slug}` URL 파라미터도 지원합니다.
+
+새 시나리오 추가:
+
+```bash
+# scenarios/edu-rd.json 같은 새 파일 생성 (파일명이 곧 slug)
+```
+
+시나리오 파일 예시:
 
 ```json
 {
-  "keywords": ["AI", "인공지능", "머신러닝", "LLM"],
-  "exclude_keywords": ["교육", "연수"],
-  "service_divs": ["일반용역", "기술용역"],
-  "lookback_days": 1,
-  "keep_days": 60,
+  "slug": "ai-finance",
+  "title": "AI · 디지털 헬스케어 · 금융",
+  "description": "AI/생성형 AI/LLM, 디지털 헬스케어, 한국 금융 데이터 관련 공고",
+  "keywords": ["AI", "인공지능", "머신러닝", "딥러닝", "금융", "투자"],
+  "exclude_keywords": [],
   "match_mode": "any",
-  "case_sensitive": false
+  "case_sensitive": false,
+  "relevance_filter": {
+    "enabled": true,
+    "provider": "openai",
+    "model": "gpt-5-mini",
+    "min_score": 3,
+    "context": "관심 분야를 자연어로 서술. 예: 'AI/생성형 AI, 디지털 헬스케어, ...'"
+  }
 }
 ```
 
-- `match_mode: "any"` — 키워드 중 하나라도 공고명에 있으면 수집 (권장, 빠름)
+- `slug` — 파일명(확장자 제외)과 정확히 일치해야 함. URL과 산출물 파일명에도 사용됨.
+- `keywords` — 공고명(또는 bizinfo의 title+summary)에 포함될 단어
+- `match_mode: "any"` — 키워드 중 하나라도 공고명에 있으면 수집 (권장)
 - `match_mode: "all"` — 모든 키워드가 공고명에 들어가 있어야 수집 (매우 좁음)
 - `exclude_keywords` — 공고명에 포함되면 제외할 단어
-- `service_divs` — 용역구분(`srvceDivNm`) 화이트리스트. 정확히 일치하는 항목만 통과. 예: `["일반용역", "기술용역"]` 로 두면 `일반용역(리스)` 등은 자동 제외. 빈 배열(`[]`)이면 필터하지 않음.
-- `relevance_filter` — LLM 기반 관련성 평가 (선택). 자세한 설정은 아래 [LLM 관련성 필터](#llm-관련성-필터) 참고.
+- `relevance_filter` — LLM 기반 관련성 평가 (선택). 자세한 설정은 [LLM 관련성 필터](#llm-관련성-필터) 참고.
+
+크롤은 **모든 시나리오 키워드의 합집합**으로 한 번에 수행됩니다 (API 호출 절약).
+시나리오별 필터링·관련성 평가·인덱스 빌드는 별도 단계.
+
+`config.json` 은 시나리오와 무관한 글로벌 설정만 담습니다:
+
+```json
+{
+  "scenarios_dir": "scenarios",
+  "service_divs": ["일반용역", "기술용역"],
+  "lookback_days": 1,
+  "keep_days": 60
+}
+```
+
+- `service_divs` — 용역구분(`srvceDivNm`) 화이트리스트 (모든 시나리오 공통). 정확히 일치하는 항목만 통과. 빈 배열이면 필터 안 함.
 - `lookback_days` — 매 실행 시 최근 며칠치를 조회할지 (기본 1)
 - `keep_days` — 대시보드에서 보여줄 데이터 보관 기간 (기본 60일)
 
@@ -63,7 +107,7 @@
 "가천대 AI타워 신축공사" 같은 노이즈가 들어옵니다. LLM에게 0-5점 관련성 점수를
 받아서 `min_score` 미만을 제거하면 깔끔해집니다.
 
-`config.json` 의 `relevance_filter` 블록:
+각 시나리오 파일 안의 `relevance_filter` 블록:
 
 ```json
 {
@@ -87,20 +131,22 @@
 API 키는 GitHub Secrets 에 `OPENAI_API_KEY` 또는 `ANTHROPIC_API_KEY` 로 등록.
 로컬 테스트는 `.env` 에 같은 이름으로 추가.
 
-평가 결과는 `data/_relevance_cache.json` 에 캐시되어 같은 공고는 재호출하지 않습니다.
+평가 결과는 **시나리오별로** `data/_relevance/{slug}.json` 에 캐시됩니다.
+같은 공고도 시나리오마다 context 가 다르면 점수가 다를 수 있어 분리 저장.
 60일 (keep_days) 지난 공고는 캐시에서 자동 정리됩니다.
 
 수동 실행:
 
 ```bash
-python scripts/score_relevance.py --dry-run     # 평가 대상만 확인
-python scripts/score_relevance.py --limit 10    # 최대 10건만 (테스트)
-python scripts/score_relevance.py --rescore-all # 캐시 무시하고 전부 재평가 (context 바꾼 후)
-python scripts/score_relevance.py               # 미평가 공고만 (일반 사용)
+python scripts/score_relevance.py --dry-run            # 평가 대상만 확인
+python scripts/score_relevance.py --scenario ai-finance # 특정 시나리오만
+python scripts/score_relevance.py --limit 10           # 시나리오당 최대 10건 (테스트)
+python scripts/score_relevance.py --rescore-all        # 캐시 무시하고 전부 재평가
+python scripts/score_relevance.py                      # 모든 시나리오, 미평가만
 ```
 
 **비용 추정** (gpt-4o-mini 기준): 공고당 ~$0.00007. 200건 백필 ≈ $0.014, 이후 신규
-30건/일 ≈ $0.002/일. **월 $0.5 미만** 수준.
+30건/일 ≈ $0.002/일. **월 $0.5 미만** 수준. (시나리오 N개면 비용도 N배.)
 
 ## 초기 설정
 

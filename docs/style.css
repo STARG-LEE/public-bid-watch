@@ -73,6 +73,61 @@ header h1 {
   color: var(--muted);
 }
 
+.scenario-bar {
+  margin: 16px 0 6px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+.scenario-bar-inner {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+.scenario-tab {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  padding: 7px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-family: inherit;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: all 0.12s;
+}
+.scenario-tab:hover { color: var(--text); border-color: var(--accent); }
+.scenario-tab.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
+}
+.scenario-tab .count {
+  opacity: 0.75;
+  margin-left: 6px;
+  font-size: 11px;
+  font-weight: 500;
+}
+.scenario-tab.propose {
+  border-style: dashed;
+  color: var(--accent);
+  background: transparent;
+}
+.scenario-tab.propose:hover {
+  background: rgba(88, 166, 255, 0.08);
+}
+.scenario-loading {
+  font-size: 12px;
+  color: var(--muted);
+}
+.scenario-desc {
+  margin: 4px 0 12px;
+  color: var(--muted);
+  font-size: 13px;
+  min-height: 1.2em;
+}
+
 main { padding: 28px 0 48px; }
 
 .stats {

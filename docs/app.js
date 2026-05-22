@@ -1,12 +1,15 @@
 (() => {
-  const DATA_URL = "./data/index.json";
+  const SCENARIOS_URL = "./data/scenarios.json";
+  const indexUrl = (slug) => `./data/index-${slug}.json`;
 
   const state = {
     tab: "closing_soon",
     query: "",
     selectedKeyword: "__all__",
-    selectedSource: "__all__",   // __all__ | g2b | bizinfo
-    data: null,
+    selectedSource: "__all__",
+    scenarios: null,   // scenarios.json payload
+    currentSlug: null, // 현재 선택된 시나리오 slug
+    data: null,        // 현재 시나리오의 index 데이터
   };
 
   const SOURCE_LABEL = { g2b: "나라장터", bizinfo: "기업마당", iris: "IRIS", nrf: "NRF", iitp: "IITP" };
@@ -49,8 +52,8 @@
   }
 
   function buildBidUrl(item) {
-    if (item.url) return item.url;                       // bizinfo 정규화 필드
-    if (item.bidNtceDtlUrl) return item.bidNtceDtlUrl;   // g2b
+    if (item.url) return item.url;
+    if (item.bidNtceDtlUrl) return item.bidNtceDtlUrl;
     if (item.bidNtceNo) {
       return `https://www.g2b.go.kr:8101/ep/invitation/publish/bidInfoDtl.do?bidno=${encodeURIComponent(item.bidNtceNo)}&bidseq=${encodeURIComponent(item.bidNtceOrd || "")}`;
     }
@@ -190,7 +193,6 @@
     const container = $("#kw-filter");
     if (!state.data || !container) return;
 
-    // 현재 탭 + 출처 필터 적용된 부분집합에서 키워드 카운트
     const src = state.selectedSource;
     const bucket = (state.data[state.tab] || []).filter((it) =>
       src === "__all__" ? true : (it.source || "g2b") === src,
@@ -201,10 +203,8 @@
       for (const k of kws) counts.set(k, (counts.get(k) || 0) + 1);
     }
 
-    // 설정된 키워드 순서 유지 + 실제 매치된 것만 표시
-    const configKws = state.data.config?.keywords || [];
-    const ordered = configKws.filter((k) => counts.has(k));
-    // 설정에 없지만 데이터에 있는 키워드도 뒤에 추가 (예: 설정 변경 직후)
+    const scenarioKws = state.data.scenario?.keywords || state.data.config?.keywords || [];
+    const ordered = scenarioKws.filter((k) => counts.has(k));
     for (const [k] of counts) if (!ordered.includes(k)) ordered.push(k);
 
     const chips = [`<button class="kw-chip ${state.selectedKeyword === "__all__" ? "active" : ""}" data-kw="__all__">전체 <span class="count">${bucket.length}</span></button>`];
@@ -219,9 +219,11 @@
     const d = state.data;
     if (!d) return;
     $("#generated-at").textContent = `갱신: ${fmtKoreanDateTime(d.generated_at)}`;
-    const kws = (d.config?.keywords || []).join(", ") || "없음";
-    const mode = d.config?.match_mode === "all" ? "(모두 포함)" : "(하나라도 포함)";
+    const sc = d.scenario || {};
+    const kws = (sc.keywords || []).join(", ") || "없음";
+    const mode = sc.match_mode === "all" ? "(모두 포함)" : "(하나라도 포함)";
     $("#keywords").textContent = `키워드 ${mode}: ${kws}`;
+    $("#scenario-desc").textContent = sc.description || "";
     $("#stat-soon").textContent = d.stats?.closing_soon ?? "-";
     $("#stat-open").textContent = d.stats?.open ?? "-";
     $("#stat-closed").textContent = d.stats?.closed ?? "-";
@@ -229,8 +231,6 @@
     updateSourceCounts();
   }
 
-  // 출처 칩 카운트를 '현재 탭의 버킷' 기준으로 갱신.
-  // 위 카운트와 실제 클릭 시 보이는 항목 수가 정확히 일치하도록.
   function updateSourceCounts() {
     const d = state.data;
     if (!d) return;
@@ -252,13 +252,80 @@
     setCount("#cnt-iitp", counts.iitp);
   }
 
+  function renderScenarioBar() {
+    const bar = $("#scenario-bar");
+    if (!bar) return;
+    const list = state.scenarios?.scenarios || [];
+    if (list.length === 0) {
+      bar.innerHTML = '<span class="scenario-loading">시나리오가 없습니다.</span>';
+      return;
+    }
+    const chips = list.map((s) => {
+      const active = s.slug === state.currentSlug ? "active" : "";
+      const total = s.stats?.total ?? "-";
+      return `<button class="scenario-tab ${active}" data-slug="${escapeHtml(s.slug)}" title="${escapeHtml(s.description || "")}">${escapeHtml(s.title || s.slug)} <span class="count">${total}</span></button>`;
+    });
+    bar.innerHTML = chips.join("");
+  }
+
+  function updateUrlForScenario(slug) {
+    try {
+      const u = new URL(window.location.href);
+      if (slug) u.searchParams.set("scenario", slug);
+      else u.searchParams.delete("scenario");
+      window.history.replaceState(null, "", u.toString());
+    } catch {
+      // ignore
+    }
+  }
+
+  async function loadScenarioData(slug) {
+    try {
+      const r = await fetch(indexUrl(slug), { cache: "no-store" });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      state.data = await r.json();
+      state.currentSlug = slug;
+      // 시나리오 바뀌면 필터 초기화 (잘못된 조합 방지)
+      state.selectedKeyword = "__all__";
+      updateUrlForScenario(slug);
+      renderScenarioBar();
+      updateMeta();
+      buildKeywordFilter();
+      render();
+    } catch (e) {
+      $("#list").innerHTML = `<p class="empty">데이터를 불러오지 못했습니다 (${escapeHtml(slug)}): ${escapeHtml(String(e))}<br>워크플로우가 한 번 이상 실행되어야 <code>docs/data/index-${escapeHtml(slug)}.json</code>이 생성됩니다.</p>`;
+    }
+  }
+
+  function pickInitialSlug() {
+    const urlSlug = new URLSearchParams(window.location.search).get("scenario");
+    const list = state.scenarios?.scenarios || [];
+    const found = list.find((s) => s.slug === urlSlug);
+    if (found) return found.slug;
+    if (state.scenarios?.default_slug) return state.scenarios.default_slug;
+    if (list.length > 0) return list[0].slug;
+    return null;
+  }
+
+  async function loadScenarios() {
+    try {
+      const r = await fetch(SCENARIOS_URL, { cache: "no-store" });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      state.scenarios = await r.json();
+    } catch (e) {
+      $("#scenario-bar").innerHTML =
+        `<span class="scenario-loading">시나리오 목록을 불러오지 못했습니다: ${escapeHtml(String(e))}</span>`;
+      return false;
+    }
+    return true;
+  }
+
   function bindEvents() {
     document.querySelectorAll(".tab").forEach((btn) => {
       btn.addEventListener("click", () => {
         document.querySelectorAll(".tab").forEach((b) => b.classList.remove("active"));
         btn.classList.add("active");
         state.tab = btn.dataset.tab;
-        // 탭 바꾸면 출처 카운트 + 키워드 칩 둘 다 현재 버킷 기준으로 재계산
         updateSourceCounts();
         buildKeywordFilter();
         render();
@@ -268,19 +335,16 @@
       state.query = e.target.value;
       render();
     });
-    // 출처 칩 클릭
     $("#source-filter").addEventListener("click", (e) => {
       const chip = e.target.closest(".source-chip");
       if (!chip) return;
       state.selectedSource = chip.dataset.source;
-      // 출처 바꾸면 키워드 선택은 초기화 (잘못된 조합 방지)
       state.selectedKeyword = "__all__";
       document.querySelectorAll("#source-filter .source-chip").forEach((c) => c.classList.remove("active"));
       chip.classList.add("active");
       buildKeywordFilter();
       render();
     });
-    // 키워드 칩 클릭은 이벤트 위임으로 처리 (칩이 동적으로 재생성되므로)
     $("#kw-filter").addEventListener("click", (e) => {
       const chip = e.target.closest(".kw-chip");
       if (!chip) return;
@@ -289,21 +353,27 @@
       chip.classList.add("active");
       render();
     });
+    $("#scenario-bar").addEventListener("click", (e) => {
+      const tab = e.target.closest(".scenario-tab");
+      if (!tab) return;
+      const slug = tab.dataset.slug;
+      if (!slug || slug === state.currentSlug) return;
+      loadScenarioData(slug);
+    });
   }
 
-  async function load() {
-    try {
-      const r = await fetch(DATA_URL, { cache: "no-store" });
-      if (!r.ok) throw new Error(`HTTP ${r.status}`);
-      state.data = await r.json();
-      updateMeta();
-      buildKeywordFilter();
-      render();
-    } catch (e) {
-      $("#list").innerHTML = `<p class="empty">데이터를 불러오지 못했습니다: ${escapeHtml(String(e))}<br>워크플로우가 한 번 이상 실행되어야 <code>docs/data/index.json</code>이 생성됩니다.</p>`;
+  async function init() {
+    bindEvents();
+    const ok = await loadScenarios();
+    if (!ok) return;
+    renderScenarioBar();
+    const slug = pickInitialSlug();
+    if (!slug) {
+      $("#list").innerHTML = '<p class="empty">활성 시나리오가 없습니다.</p>';
+      return;
     }
+    await loadScenarioData(slug);
   }
 
-  bindEvents();
-  load();
+  init();
 })();

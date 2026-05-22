@@ -1,19 +1,22 @@
 """
-LLM 기반 공고 관련성 평가 스크립트.
+LLM 기반 공고 관련성 평가 스크립트 (시나리오 인식 버전).
 
 build_index 실행 직전에 호출되어, data/*.json 의 모든 공고를
 LLM(OpenAI 또는 Anthropic)에게 보내 0-5점 관련성 점수를 받아온다.
-이미 평가된 공고는 data/_relevance_cache.json 에 캐시되어 재호출하지 않는다.
+이미 평가된 공고는 data/_relevance/{scenario_slug}.json 에 캐시되어 재호출하지 않는다.
+
+같은 공고도 시나리오마다 context 가 다르므로 점수가 다를 수 있다 → 시나리오별로 캐시 분리.
 
 환경변수:
     OPENAI_API_KEY    (provider=openai 일 때 필요)
     ANTHROPIC_API_KEY (provider=anthropic 일 때 필요)
 
 사용법:
-    python scripts/score_relevance.py              # 미평가 공고만 평가
-    python scripts/score_relevance.py --limit 20   # 최대 20건만 (테스트용)
-    python scripts/score_relevance.py --rescore-all  # 캐시 무시하고 전부 재평가
-    python scripts/score_relevance.py --dry-run    # API 호출 없이 평가 대상만 출력
+    python scripts/score_relevance.py                     # 모든 시나리오, 미평가 공고만
+    python scripts/score_relevance.py --scenario foo      # 특정 시나리오만
+    python scripts/score_relevance.py --limit 20          # 최대 20건만 (테스트용)
+    python scripts/score_relevance.py --rescore-all       # 캐시 무시하고 전부 재평가
+    python scripts/score_relevance.py --dry-run           # API 호출 없이 평가 대상만 출력
 """
 from __future__ import annotations
 
@@ -34,7 +37,11 @@ except Exception:
 ROOT = Path(__file__).resolve().parent.parent
 CONFIG_PATH = ROOT / "config.json"
 DATA_DIR = ROOT / "data"
-CACHE_PATH = DATA_DIR / "_relevance_cache.json"
+RELEVANCE_DIR = DATA_DIR / "_relevance"
+LEGACY_CACHE_PATH = DATA_DIR / "_relevance_cache.json"
+
+sys.path.insert(0, str(ROOT / "scripts"))
+from scenarios import GlobalConfig, Scenario, load_scenarios  # noqa: E402
 
 DEFAULT_INSTRUCTION = (
     "당신은 한국 정부 입찰공고의 관련성 평가자입니다. "
@@ -68,25 +75,52 @@ def now_kst() -> datetime:
     return datetime.now(tz=KST)
 
 
-def load_config() -> dict:
-    with CONFIG_PATH.open(encoding="utf-8") as f:
-        return json.load(f)
+def cache_path_for(slug: str) -> Path:
+    return RELEVANCE_DIR / f"{slug}.json"
 
 
-def load_cache() -> dict:
-    if not CACHE_PATH.exists():
+def load_cache(slug: str) -> dict:
+    path = cache_path_for(slug)
+    if not path.exists():
         return {}
     try:
-        with CACHE_PATH.open(encoding="utf-8") as f:
+        with path.open(encoding="utf-8") as f:
             return json.load(f)
     except (json.JSONDecodeError, OSError):
         return {}
 
 
-def save_cache(cache: dict) -> None:
-    DATA_DIR.mkdir(parents=True, exist_ok=True)
-    with CACHE_PATH.open("w", encoding="utf-8") as f:
+def save_cache(slug: str, cache: dict) -> None:
+    RELEVANCE_DIR.mkdir(parents=True, exist_ok=True)
+    path = cache_path_for(slug)
+    with path.open("w", encoding="utf-8") as f:
         json.dump(cache, f, ensure_ascii=False, indent=2, sort_keys=True)
+
+
+def migrate_legacy_cache_if_needed(slug: str) -> None:
+    """기존 _relevance_cache.json 을 새 위치 (_relevance/{slug}.json) 로 이동.
+
+    Phase 1 일회성 마이그레이션. 새 캐시 파일이 이미 있으면 건드리지 않는다.
+    """
+    new_path = cache_path_for(slug)
+    if new_path.exists() or not LEGACY_CACHE_PATH.exists():
+        return
+    try:
+        with LEGACY_CACHE_PATH.open(encoding="utf-8") as f:
+            legacy = json.load(f)
+    except (json.JSONDecodeError, OSError):
+        return
+    RELEVANCE_DIR.mkdir(parents=True, exist_ok=True)
+    with new_path.open("w", encoding="utf-8") as f:
+        json.dump(legacy, f, ensure_ascii=False, indent=2, sort_keys=True)
+    try:
+        LEGACY_CACHE_PATH.unlink()
+    except OSError:
+        pass
+    print(
+        f"[migrate] {LEGACY_CACHE_PATH.relative_to(ROOT)} → "
+        f"{new_path.relative_to(ROOT)} ({len(legacy)}건)"
+    )
 
 
 def collect_unique_items(keep_days: int) -> dict[str, dict]:
@@ -130,7 +164,6 @@ def parse_json_loose(text: str) -> dict | None:
         return None
     text = text.strip()
     if text.startswith("```"):
-        # ```json ... ``` 형태 제거
         lines = text.splitlines()
         if lines and lines[-1].startswith("```"):
             lines = lines[:-1]
@@ -185,56 +218,54 @@ def score_one(provider: str, model: str, system: str, user: str) -> dict | None:
 
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser()
-    p.add_argument("--limit", type=int, default=None, help="최대 평가 건수 (테스트용)")
+    p.add_argument("--scenario", type=str, default=None, help="특정 시나리오 slug 만 평가")
+    p.add_argument("--limit", type=int, default=None, help="시나리오당 최대 평가 건수 (테스트용)")
     p.add_argument("--rescore-all", action="store_true", help="캐시 무시하고 전부 재평가")
     p.add_argument("--dry-run", action="store_true", help="API 호출 없이 평가 대상만 출력")
     return p.parse_args()
 
 
-def main() -> int:
-    args = parse_args()
-    cfg = load_config()
-    rf = cfg.get("relevance_filter", {})
-    if not rf.get("enabled", False):
-        print("relevance_filter.enabled=false → 평가 스킵")
-        return 0
+def run_for_scenario(
+    sc: Scenario,
+    items: dict[str, dict],
+    args: argparse.Namespace,
+) -> bool:
+    """단일 시나리오에 대해 평가 수행. 평가가 정상 종료되면 True."""
+    rf = sc.relevance_filter
+    if not rf.enabled:
+        print(f"[{sc.slug}] relevance_filter.enabled=false → 스킵")
+        return True
+    if not rf.context:
+        print(f"[{sc.slug}] ERROR: relevance_filter.context 가 비어있습니다.", file=sys.stderr)
+        return False
 
-    provider = rf.get("provider", "openai")
-    model = rf.get("model", "gpt-4o-mini")
-    context = (rf.get("context") or "").strip()
-    delay = float(rf.get("rate_limit_delay_seconds", 0.2))
-    keep_days = int(cfg.get("keep_days", 60))
-
-    if not context:
-        print("ERROR: relevance_filter.context 가 비어있습니다.", file=sys.stderr)
-        return 2
-
-    env_key = "OPENAI_API_KEY" if provider == "openai" else "ANTHROPIC_API_KEY"
+    env_key = "OPENAI_API_KEY" if rf.provider == "openai" else "ANTHROPIC_API_KEY"
     if not args.dry_run and not os.environ.get(env_key, "").strip():
-        print(f"ERROR: {env_key} 환경변수가 비어있습니다.", file=sys.stderr)
-        print(f"  .env 또는 GitHub Secrets 에 {env_key} 등록 필요.", file=sys.stderr)
-        return 2
+        print(f"[{sc.slug}] ERROR: {env_key} 환경변수가 비어있습니다.", file=sys.stderr)
+        return False
 
-    items = collect_unique_items(keep_days)
-    cache = {} if args.rescore_all else load_cache()
+    migrate_legacy_cache_if_needed(sc.slug)
+    cache = {} if args.rescore_all else load_cache(sc.slug)
     pending_keys = [k for k in items if k not in cache]
 
-    print(f"provider={provider} / model={model} / min_score={rf.get('min_score','-')}")
-    print(f"평가 대상 공고: {len(items)}개 / 미평가: {len(pending_keys)}개 / 캐시: {len(cache)}개")
+    print(f"[{sc.slug}] provider={rf.provider} / model={rf.model} / min_score={rf.min_score}")
+    print(
+        f"[{sc.slug}] 평가 대상: {len(items)}개 / 미평가: {len(pending_keys)}개 / 캐시: {len(cache)}개"
+    )
 
     if args.dry_run:
         for k in pending_keys[:10]:
             print(f"  - {k}: {items[k].get('bidNtceNm','')[:80]}")
         if len(pending_keys) > 10:
             print(f"  ... (+{len(pending_keys) - 10}건)")
-        return 0
+        return True
 
     if args.limit is not None:
         pending_keys = pending_keys[: args.limit]
 
     system = (
         f"{DEFAULT_INSTRUCTION}\n\n"
-        f"=== 사용자 관심 분야 ===\n{context}"
+        f"=== 사용자 관심 분야 ===\n{rf.context}"
     )
 
     now_iso = now_kst().isoformat(timespec="seconds")
@@ -243,16 +274,16 @@ def main() -> int:
     for i, key in enumerate(pending_keys, 1):
         item = items[key]
         try:
-            result = score_one(provider, model, system, build_user_prompt(item))
+            result = score_one(rf.provider, rf.model, system, build_user_prompt(item))
         except Exception as e:  # 모든 API/네트워크 오류
-            print(f"  [{i}/{len(pending_keys)}] {key} ERROR: {e}", file=sys.stderr)
+            print(f"  [{sc.slug}][{i}/{len(pending_keys)}] {key} ERROR: {e}", file=sys.stderr)
             fail += 1
-            time.sleep(delay)
+            time.sleep(rf.rate_limit_delay_seconds)
             continue
         if not result or not isinstance(result.get("score"), (int, float)):
-            print(f"  [{i}/{len(pending_keys)}] {key} 파싱 실패: {result}", file=sys.stderr)
+            print(f"  [{sc.slug}][{i}/{len(pending_keys)}] {key} 파싱 실패: {result}", file=sys.stderr)
             fail += 1
-            time.sleep(delay)
+            time.sleep(rf.rate_limit_delay_seconds)
             continue
         score = max(0, min(5, int(result["score"])))
         reason = str(result.get("reason", ""))[:200]
@@ -260,14 +291,14 @@ def main() -> int:
             "score": score,
             "reason": reason,
             "scored_at": now_iso,
-            "model": model,
-            "provider": provider,
+            "model": rf.model,
+            "provider": rf.provider,
         }
         success += 1
         if i % 10 == 0:
-            save_cache(cache)
-            print(f"  [{i}/{len(pending_keys)}] 진행중 (success={success}, fail={fail})")
-        time.sleep(delay)
+            save_cache(sc.slug, cache)
+            print(f"  [{sc.slug}][{i}/{len(pending_keys)}] 진행중 (success={success}, fail={fail})")
+        time.sleep(rf.rate_limit_delay_seconds)
 
     # keep_days 지나 더 이상 데이터에 없는 공고 캐시 정리
     valid_keys = set(items.keys())
@@ -275,10 +306,34 @@ def main() -> int:
     for k in pruned_keys:
         del cache[k]
 
-    save_cache(cache)
-    print(f"\n완료: 신규 {success}건 / 실패 {fail}건 / 만료 정리 {len(pruned_keys)}건")
-    print(f"캐시 총 {len(cache)}건 → {CACHE_PATH.relative_to(ROOT)}")
-    return 0 if fail == 0 else 1
+    save_cache(sc.slug, cache)
+    print(f"[{sc.slug}] 완료: 신규 {success}건 / 실패 {fail}건 / 만료 정리 {len(pruned_keys)}건")
+    print(f"[{sc.slug}] 캐시 총 {len(cache)}건 → {cache_path_for(sc.slug).relative_to(ROOT)}")
+    return fail == 0
+
+
+def main() -> int:
+    args = parse_args()
+    cfg = GlobalConfig.load(CONFIG_PATH)
+    scenarios = load_scenarios(ROOT, cfg.scenarios_dir)
+
+    if args.scenario:
+        scenarios = [s for s in scenarios if s.slug == args.scenario]
+        if not scenarios:
+            print(f"ERROR: '--scenario {args.scenario}' 에 해당하는 시나리오가 없습니다.", file=sys.stderr)
+            return 2
+
+    items = collect_unique_items(cfg.keep_days)
+    print(f"전체 공고 (최근 {cfg.keep_days}일): {len(items)}개")
+    print(f"평가할 시나리오 {len(scenarios)}개: {[s.slug for s in scenarios]}")
+    print()
+
+    all_ok = True
+    for sc in scenarios:
+        ok = run_for_scenario(sc, items, args)
+        all_ok = all_ok and ok
+        print()
+    return 0 if all_ok else 1
 
 
 if __name__ == "__main__":
