@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-05-22T18:10:36+09:00",
+  "generated_at": "2026-05-22T18:42:32+09:00",
   "date": "2026-05-22",
-  "count": 71,
+  "count": 72,
   "items": [
     {
       "bidNtceNo": "R26BK01536561",
@@ -1777,6 +1777,31 @@
       "ntceInsttOfclNm": "권은선",
       "ntceInsttOfclTelNo": "061-659-4859",
       "sucsfbidMthdNm": "적격심사제-추정가격이 10억원 이상인 P.Q대상 기술용역의 평가기준"
+    },
+    {
+      "bidNtceNo": "R26BK01540827",
+      "bidNtceOrd": "000",
+      "bidNtceNm": "의료 버티컬 AI 및 DLI 과정 교재 개발",
+      "ntceInsttNm": "주식회사 아이스테이징아시아",
+      "ntceInsttCd": "ZT05862",
+      "dminsttNm": "주식회사 아이스테이징아시아",
+      "dminsttCd": "ZT05862",
+      "bidMethdNm": "전자입찰",
+      "cntrctCnclsMthdNm": "제한경쟁",
+      "ntceKindNm": "등록공고",
+      "bsnsDivNm": "",
+      "srvceDivNm": "일반용역",
+      "ppswGnrlSrvceYn": "N",
+      "bidNtceDt": "2026-05-22 18:33:04",
+      "bidBeginDt": "2026-05-22 19:00:00",
+      "bidClseDt": "2026-06-12 18:00:00",
+      "opengDt": "2026-06-12 19:00:00",
+      "asignBdgtAmt": "220000000",
+      "presmptPrce": "200000000",
+      "bidNtceDtlUrl": "https://www.g2b.go.kr/link/PNPE027_01/single/?bidPbancNo=R26BK01540827&bidPbancOrd=000",
+      "ntceInsttOfclNm": "오성진",
+      "ntceInsttOfclTelNo": "02-583-0403",
+      "sucsfbidMthdNm": "협상에의한계약-협상에 의한 낙찰자 결정"
     }
   ]
 }
