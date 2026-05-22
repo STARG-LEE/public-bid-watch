@@ -1,0 +1,79 @@
+name: 새 시나리오 제안
+description: 관심 분야를 알려주시면 LLM 이 키워드/관련성 평가 context 초안을 만들고, 관리자가 검토 후 머지하면 다음 크롤부터 대시보드에 추가됩니다.
+title: "[시나리오] "
+labels: ["scenario-proposal"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        새 시나리오를 제안해주세요. **자연어로 자세히** 적을수록 LLM 이 더 정확한 키워드와 관련성 context 를 만들어냅니다.
+
+        **승인 흐름:**
+        1. 이 이슈 등록 → 자동 워크플로우가 LLM 으로 시나리오 JSON 초안 작성
+        2. 자동 PR 생성 → 관리자가 검토·수정 후 머지
+        3. 다음 크롤(매일 KST 08:30)부터 대시보드에 새 탭으로 추가됨
+
+  - type: input
+    id: title
+    attributes:
+      label: 시나리오 이름
+      description: 대시보드 탭에 표시될 이름. 10자 이내 권장.
+      placeholder: "예: 환경·녹색성장"
+    validations:
+      required: true
+
+  - type: input
+    id: slug
+    attributes:
+      label: 영문 slug (선택)
+      description: 파일명/URL 에 사용. 비워두면 LLM 이 자동 생성. 소문자·하이픈만 사용.
+      placeholder: "예: env-green"
+    validations:
+      required: false
+
+  - type: textarea
+    id: description
+    attributes:
+      label: 관심 분야 설명 (가장 중요)
+      description: |
+        이 시나리오로 어떤 공고를 찾고 싶은지 **자세히** 설명해주세요.
+        - 무엇이 *관련 있는지* (구체적인 사업 유형, 기술, 산업)
+        - 무엇이 *무관한지* (오해의 소지가 있는 단어가 들어가지만 본질은 다른 분야)
+      placeholder: |
+        예시) 환경·녹색성장 관련 공고를 찾고 싶습니다. 구체적으로:
+        - 탄소중립, 재생에너지(태양광·풍력·수소), 전기차·배터리 인프라
+        - 환경영향평가, 폐기물·재활용, 미세먼지·수질 관리 시스템
+        - ESG 데이터 분석/리포팅, 친환경 인증·표준
+        무관한 분야: 단순 건축 리모델링, 청소·방역, 시설관리·임대, 차량 구매 등
+        본업이 건축·청소·임대인데 친환경이라는 단어만 들어간 공고는 제외.
+    validations:
+      required: true
+
+  - type: textarea
+    id: keywords_hint
+    attributes:
+      label: 키워드 힌트 (선택)
+      description: 떠오르는 키워드가 있으면 적어주세요. LLM 이 이걸 참고해서 더 완전한 리스트를 만듭니다.
+      placeholder: "탄소중립, 재생에너지, 태양광, 풍력, ESG, 전기차"
+    validations:
+      required: false
+
+  - type: dropdown
+    id: provider
+    attributes:
+      label: LLM provider (관련성 평가용)
+      description: 시나리오의 관련성 평가에 사용할 모델 제공자. 키가 등록돼있는 쪽으로 선택.
+      options:
+        - openai
+        - anthropic
+      default: 0
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: confirm
+    attributes:
+      label: 확인
+      options:
+        - label: 위 내용으로 자동 PR 이 생성되는 것에 동의합니다. (관리자가 머지하기 전까진 대시보드에 노출되지 않습니다.)
+          required: true

@@ -49,11 +49,23 @@
 키워드와 관심 분야는 **시나리오 단위**로 묶입니다. 시나리오 = `scenarios/{slug}.json` 파일 하나.
 대시보드 상단의 시나리오 탭으로 전환되며, `?scenario={slug}` URL 파라미터도 지원합니다.
 
-새 시나리오 추가:
+### 방법 1: 홈페이지에서 제안 (권장)
 
-```bash
-# scenarios/edu-rd.json 같은 새 파일 생성 (파일명이 곧 slug)
-```
+대시보드 상단의 **"+ 새 시나리오 제안"** 버튼 → GitHub Issue 폼을 작성하면
+워크플로우가 LLM 으로 시나리오 JSON 초안을 만들고 PR 을 자동으로 올립니다.
+관리자가 PR 을 검토·머지하면 다음 크롤부터 새 탭으로 반영됩니다.
+
+흐름:
+1. 사용자: Issue 폼 작성 → 라벨 `scenario-proposal` 자동 부여
+2. 워크플로우 [`propose.yml`](.github/workflows/propose.yml): [`propose_scenario.py`](scripts/propose_scenario.py) 실행 → `scenarios/{slug}.json` 생성 → `proposal/issue-N-{slug}` 브랜치 push → PR 생성
+3. 관리자: PR 의 keywords / exclude_keywords / context 검토·수정 → 머지
+4. 다음 크롤(매일 KST 08:30)부터 새 시나리오 탭 노출
+
+비용 안내: 시나리오 1건 생성 ≈ $0.001 미만 (gpt-5-mini). 스팸 방지는 GitHub 로그인 + 라벨 + 관리자 PR 검토 단계로 충분.
+
+### 방법 2: 직접 파일 작성
+
+`scenarios/{slug}.json` 을 직접 만들어 PR 또는 push.
 
 시나리오 파일 예시:
 

@@ -1,6 +1,8 @@
 (() => {
   const SCENARIOS_URL = "./data/scenarios.json";
   const indexUrl = (slug) => `./data/index-${slug}.json`;
+  const PROPOSE_ISSUE_URL =
+    "https://github.com/STARG-LEE/public-bid-watch/issues/new?template=scenario.yml";
 
   const state = {
     tab: "closing_soon",
@@ -256,15 +258,19 @@
     const bar = $("#scenario-bar");
     if (!bar) return;
     const list = state.scenarios?.scenarios || [];
+    const chips = [];
     if (list.length === 0) {
-      bar.innerHTML = '<span class="scenario-loading">시나리오가 없습니다.</span>';
-      return;
+      chips.push('<span class="scenario-loading">시나리오가 없습니다.</span>');
+    } else {
+      for (const s of list) {
+        const active = s.slug === state.currentSlug ? "active" : "";
+        const total = s.stats?.total ?? "-";
+        chips.push(`<button class="scenario-tab ${active}" data-slug="${escapeHtml(s.slug)}" title="${escapeHtml(s.description || "")}">${escapeHtml(s.title || s.slug)} <span class="count">${total}</span></button>`);
+      }
     }
-    const chips = list.map((s) => {
-      const active = s.slug === state.currentSlug ? "active" : "";
-      const total = s.stats?.total ?? "-";
-      return `<button class="scenario-tab ${active}" data-slug="${escapeHtml(s.slug)}" title="${escapeHtml(s.description || "")}">${escapeHtml(s.title || s.slug)} <span class="count">${total}</span></button>`;
-    });
+    chips.push(
+      `<a class="scenario-tab propose" href="${PROPOSE_ISSUE_URL}" target="_blank" rel="noopener" title="GitHub 이슈로 새 시나리오를 제안하면 LLM 이 초안을 만들어 PR 로 올립니다.">+ 새 시나리오 제안</a>`,
+    );
     bar.innerHTML = chips.join("");
   }
 
