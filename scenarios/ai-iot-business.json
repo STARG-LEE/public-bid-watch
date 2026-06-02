@@ -1,0 +1,30 @@
+{
+  "slug": "ai-iot-business",
+  "title": "AI 또는 IOT 사업",
+  "description": "AI 및 IOT 관련 사업·공고를 모니터링합니다",
+  "keywords": [
+    "인공지능",
+    "AI",
+    "LLM",
+    "IOT",
+    "사물인터넷",
+    "시니어",
+    "요양",
+    "텔레마케팅",
+    "원격모니터링",
+    "스마트홈",
+    "디지털헬스",
+    "헬스케어"
+  ],
+  "exclude_keywords": [],
+  "match_mode": "any",
+  "case_sensitive": false,
+  "relevance_filter": {
+    "enabled": true,
+    "provider": "openai",
+    "model": "gpt-5-mini",
+    "min_score": 3,
+    "rate_limit_delay_seconds": 0.2,
+    "context": "AI 또는 IOT 관련 사업 공고를 찾습니다. 우선순위는 인공지능(특히 LLM 포함), 머신러닝 기반 서비스, AI 챗봇·자동화, 사물인터넷·센서 기반 원격모니터링, 스마트홈 솔루션, 시니어·요양 지원 기술, 텔레마케팅 자동화, 디지털헬스·의료기기 연계 서비스 등 기술적 응용 및 사업화 가능성이 높은 분야입니다. 반대로 건설·토목, 농업·농업기술, 식음료·외식, 단순 인력용역·시설관리 등 비기술·현장 노동 중심 공고는 무관합니다."
+  }
+}
