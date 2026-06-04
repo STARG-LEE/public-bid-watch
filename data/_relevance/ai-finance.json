@@ -9701,6 +9701,13 @@
     "score": 3,
     "scored_at": "2026-06-03T11:10:37+09:00"
   },
+  "R26BK01558134-000": {
+    "model": "gpt-5-mini",
+    "provider": "openai",
+    "reason": "AI 교육과정 개발로 AI 인재양성·교원연수와 직접 관련",
+    "score": 5,
+    "scored_at": "2026-06-04T11:08:20+09:00"
+  },
   "R26BK01558135-000": {
     "model": "gpt-5-mini",
     "provider": "openai",
@@ -9756,5 +9763,33 @@
     "reason": "AI 에이전트 플랫폼 구축 감리로 LLM·AI 플랫폼 구축·시스템 감리 관련",
     "score": 5,
     "scored_at": "2026-06-03T11:10:37+09:00"
+  },
+  "R26BK01559005-000": {
+    "model": "gpt-5-mini",
+    "provider": "openai",
+    "reason": "AI 연계 엑스레이 진단 시스템으로 디지털 헬스·의료 AI 해당",
+    "score": 5,
+    "scored_at": "2026-06-04T11:08:20+09:00"
+  },
+  "R26BK01559091-000": {
+    "model": "gpt-5-mini",
+    "provider": "openai",
+    "reason": "AI 기반 서비스 개발은 AI 시스템 구축·컨설팅과 직접 관련",
+    "score": 5,
+    "scored_at": "2026-06-04T11:08:20+09:00"
+  },
+  "R26BK01559306-000": {
+    "model": "gpt-5-mini",
+    "provider": "openai",
+    "reason": "AI 로봇 교육 콘텐츠 개발로 AI 교육·리터러시 분야와 직접 관련",
+    "score": 5,
+    "scored_at": "2026-06-04T11:08:20+09:00"
+  },
+  "R26BK01559541-000": {
+    "model": "gpt-5-mini",
+    "provider": "openai",
+    "reason": "AI 로봇 인증체계 개발과 전문가 양성으로 AI 교육·인력양성에 직접 관련",
+    "score": 5,
+    "scored_at": "2026-06-04T11:08:20+09:00"
   }
 }
