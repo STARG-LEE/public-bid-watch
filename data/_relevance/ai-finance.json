@@ -9393,6 +9393,13 @@
     "score": 5,
     "scored_at": "2026-06-02T11:01:27+09:00"
   },
+  "R26BK01554057-000": {
+    "model": "gpt-5-mini",
+    "provider": "openai",
+    "reason": "공항 시설관리·투자계획 용역으로 AI·의료 등 관심분야와 무관",
+    "score": 0,
+    "scored_at": "2026-06-08T10:43:31+09:00"
+  },
   "R26BK01554166-000": {
     "model": "gpt-5-mini",
     "provider": "openai",
@@ -10149,6 +10156,20 @@
     "score": 2,
     "scored_at": "2026-06-05T10:39:26+09:00"
   },
+  "R26BK01561896-000": {
+    "model": "gpt-5-mini",
+    "provider": "openai",
+    "reason": "AI 기반 라이브커머스 구축·지원 용역으로 AI 컨설팅·시스템 구축과 관련",
+    "score": 4,
+    "scored_at": "2026-06-08T10:43:31+09:00"
+  },
+  "R26BK01561919-000": {
+    "model": "gpt-5-mini",
+    "provider": "openai",
+    "reason": "AI 시스템·컨설팅 관련성은 있으나 이커머스 중심",
+    "score": 3,
+    "scored_at": "2026-06-08T10:43:31+09:00"
+  },
   "R26BK01561981-000": {
     "model": "gpt-5-mini",
     "provider": "openai",
@@ -10211,6 +10232,13 @@
     "reason": "AI 기반 예측 알고리즘 연구로 기술적 관련성 있으나 분야는 해양안보",
     "score": 3,
     "scored_at": "2026-06-06T10:30:57+09:00"
+  },
+  "R26BK01562643-000": {
+    "model": "gpt-5-mini",
+    "provider": "openai",
+    "reason": "병원 리모델링 폐기물 처리용역으로 AI·의료연구·데이터와 무관",
+    "score": 0,
+    "scored_at": "2026-06-08T10:43:31+09:00"
   },
   "R26BK01562648-000": {
     "model": "gpt-5-mini",
@@ -10379,5 +10407,61 @@
     "reason": "LLM 기반 AI 에이전트 및 반도체 데이터 예측 AI 구축으로 매우 관련",
     "score": 5,
     "scored_at": "2026-06-06T10:30:57+09:00"
+  },
+  "R26BK01564679-000": {
+    "model": "gpt-5-mini",
+    "provider": "openai",
+    "reason": "AI 분석 플랫폼 고도화로 AI 시스템 구축·컨설팅과 연관됨.",
+    "score": 4,
+    "scored_at": "2026-06-08T10:43:31+09:00"
+  },
+  "R26BK01564683-000": {
+    "model": "gpt-5-mini",
+    "provider": "openai",
+    "reason": "대학생 대상 AI 교육 기획·운영으로 AI 인재양성·교육사업에 매우 관련",
+    "score": 5,
+    "scored_at": "2026-06-08T10:43:31+09:00"
+  },
+  "R26BK01564692-000": {
+    "model": "gpt-5-mini",
+    "provider": "openai",
+    "reason": "AI 전문 서밋으로 AI 교육·컨설팅·네트워킹과 직결",
+    "score": 5,
+    "scored_at": "2026-06-08T10:43:31+09:00"
+  },
+  "R26BK01564693-000": {
+    "model": "gpt-5-mini",
+    "provider": "openai",
+    "reason": "생성형 AI 챗봇 및 분류모델 고도화로 AI/LLM 시스템 구축과 직접 관련",
+    "score": 5,
+    "scored_at": "2026-06-08T10:43:31+09:00"
+  },
+  "R26BK01564726-000": {
+    "model": "gpt-5-mini",
+    "provider": "openai",
+    "reason": "농경지 침수·배수 모형 연구로 AI·의료·금융 분야와 무관",
+    "score": 0,
+    "scored_at": "2026-06-08T10:43:31+09:00"
+  },
+  "R26BK01564822-000": {
+    "model": "gpt-5-mini",
+    "provider": "openai",
+    "reason": "공공부문 AI 도입 조사로 AI 정책·연구·컨설팅 분야와 매우 관련",
+    "score": 5,
+    "scored_at": "2026-06-08T10:43:31+09:00"
+  },
+  "R26BK01564985-000": {
+    "model": "gpt-5-mini",
+    "provider": "openai",
+    "reason": "AI 기반 챗봇 시스템 구축으로 AI/LLM·시스템구축 분야와 일치",
+    "score": 5,
+    "scored_at": "2026-06-08T10:43:31+09:00"
+  },
+  "R26BK01565166-000": {
+    "model": "gpt-5-mini",
+    "provider": "openai",
+    "reason": "보건의료 AI 역량강화 해외연수로 AI·디지털헬스 인재양성 관련",
+    "score": 5,
+    "scored_at": "2026-06-08T10:43:31+09:00"
   }
 }
