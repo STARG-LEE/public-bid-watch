@@ -12928,6 +12928,13 @@
     "score": 5,
     "scored_at": "2026-06-18T11:04:12+09:00"
   },
+  "R26BK01588466-000": {
+    "model": "gpt-5-mini",
+    "provider": "openai",
+    "reason": "다중모델 생성형 AI 플랫폼 도입은 AI/LLM 및 플랫폼 구축 관심과 정확히 일치",
+    "score": 5,
+    "scored_at": "2026-06-22T11:05:48+09:00"
+  },
   "R26BK01588525-000": {
     "model": "gpt-5-mini",
     "provider": "openai",
@@ -13102,5 +13109,75 @@
     "reason": "통합 AI 대화형 검색 서비스 구축은 LLM/AI 시스템 구축과 직접 연관",
     "score": 5,
     "scored_at": "2026-06-19T11:21:31+09:00"
+  },
+  "R26BK01593277-000": {
+    "model": "gpt-5-mini",
+    "provider": "openai",
+    "reason": "대학 회계·재무 컨설팅으로 AI·의료·데이터 분야와 무관",
+    "score": 1,
+    "scored_at": "2026-06-22T11:05:48+09:00"
+  },
+  "R26BK01593465-000": {
+    "model": "gpt-5-mini",
+    "provider": "openai",
+    "reason": "학생 수송용 버스 임차로 본업이 운송업, AI 업무와 무관",
+    "score": 1,
+    "scored_at": "2026-06-22T11:05:48+09:00"
+  },
+  "R26BK01593466-000": {
+    "model": "gpt-5-mini",
+    "provider": "openai",
+    "reason": "AI 기반 교육 플랫폼 구축 사업으로 AI 교육·시스템 구축에 직접 관련",
+    "score": 5,
+    "scored_at": "2026-06-22T11:05:48+09:00"
+  },
+  "R26BK01593574-000": {
+    "model": "gpt-5-mini",
+    "provider": "openai",
+    "reason": "대사성질환 대상 AI 개인맞춤 식단 PoC로 디지털헬스·의료AI 직접 관련",
+    "score": 5,
+    "scored_at": "2026-06-22T11:05:48+09:00"
+  },
+  "R26BK01593735-000": {
+    "model": "gpt-5-mini",
+    "provider": "openai",
+    "reason": "지역경제·일자리 조사로 컨설팅·연구 가능하나 분야 불명",
+    "score": 2,
+    "scored_at": "2026-06-22T11:05:48+09:00"
+  },
+  "R26BK01593789-000": {
+    "model": "gpt-5-mini",
+    "provider": "openai",
+    "reason": "AI·SW 글로벌 DX 사업으로 AI/시스템 구축·컨설팅 관련",
+    "score": 5,
+    "scored_at": "2026-06-22T11:05:48+09:00"
+  },
+  "R26BK01593862-000": {
+    "model": "gpt-5-mini",
+    "provider": "openai",
+    "reason": "RISE 사업의 AWS 연계 AI·Cloud 교육으로 AI 인재양성·교육 분야와 직접적 연관",
+    "score": 5,
+    "scored_at": "2026-06-22T11:05:48+09:00"
+  },
+  "R26BK01594059-000": {
+    "model": "gpt-5-mini",
+    "provider": "openai",
+    "reason": "건설폐기물 처리 공사로 AI·디지털헬스 등 관심 분야와 무관",
+    "score": 0,
+    "scored_at": "2026-06-22T11:05:48+09:00"
+  },
+  "R26BK01594089-000": {
+    "model": "gpt-5-mini",
+    "provider": "openai",
+    "reason": "건축 전기 증축 공사 감리로 AI·바이오 등 관심 분야와 무관",
+    "score": 0,
+    "scored_at": "2026-06-22T11:05:48+09:00"
+  },
+  "R26BK01594174-000": {
+    "model": "gpt-5-mini",
+    "provider": "openai",
+    "reason": "건축 공사 감리로 AI·디지털·의료 분야와 무관",
+    "score": 0,
+    "scored_at": "2026-06-22T11:05:48+09:00"
   }
 }
