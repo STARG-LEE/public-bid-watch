@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-19T10:06:48+09:00",
+  "generated_at": "2026-07-20T11:47:49+09:00",
   "default_slug": "ai-finance",
   "scenarios": [
     {
@@ -23,35 +23,35 @@
         "연금"
       ],
       "stats": {
-        "open": 586,
-        "closing_soon": 175,
-        "closed": 1258,
-        "total": 2019,
+        "open": 570,
+        "closing_soon": 174,
+        "closed": 1259,
+        "total": 2003,
         "by_source": {
           "closing_soon": {
-            "bizinfo": 39,
-            "g2b": 135,
+            "g2b": 133,
+            "bizinfo": 40,
             "iris": 1
           },
           "open": {
-            "bizinfo": 240,
-            "g2b": 308,
+            "g2b": 295,
+            "bizinfo": 238,
             "iris": 3,
             "nrf": 4,
-            "iitp": 31
+            "iitp": 30
           },
           "closed": {
-            "bizinfo": 469,
-            "g2b": 776,
+            "g2b": 784,
+            "bizinfo": 462,
             "iris": 12,
             "nrf": 1
           },
           "total": {
-            "g2b": 1219,
-            "bizinfo": 748,
+            "g2b": 1212,
+            "bizinfo": 740,
             "iris": 16,
             "nrf": 5,
-            "iitp": 31
+            "iitp": 30
           }
         }
       }
