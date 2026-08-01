@@ -41,13 +41,6 @@
     "score": 5,
     "scored_at": "2026-06-03T11:10:37+09:00"
   },
-  "R26BK01540922-000": {
-    "model": "gpt-5-mini",
-    "provider": "openai",
-    "reason": "국산 AI반도체 성능평가 체계로 AI 시스템·검증 관련",
-    "score": 4,
-    "scored_at": "2026-06-01T10:41:35+09:00"
-  },
   "R26BK01541185-001": {
     "model": "gpt-5-mini",
     "provider": "openai",
@@ -110,13 +103,6 @@
     "reason": "AI 종합전략 고도화 컨설팅으로 AI 전략·컨설팅 분야와 직접적 연관",
     "score": 5,
     "scored_at": "2026-06-05T10:39:26+09:00"
-  },
-  "R26BK01551509-000": {
-    "model": "gpt-5-mini",
-    "provider": "openai",
-    "reason": "AI 인재양성(리더 양성) 교육으로 관심 분야와 직접 일치",
-    "score": 5,
-    "scored_at": "2026-06-01T10:41:35+09:00"
   },
   "R26BK01551871-000": {
     "model": "gpt-5-mini",
@@ -181,40 +167,12 @@
     "score": 4,
     "scored_at": "2026-06-02T11:01:27+09:00"
   },
-  "R26BK01553033-000": {
-    "model": "gpt-5-mini",
-    "provider": "openai",
-    "reason": "DTG 데이터 기반 AI 탄소배출 모델·TMS 연계 AI 구축 연구로 AI·시스템 구축 관련",
-    "score": 4,
-    "scored_at": "2026-06-01T10:41:35+09:00"
-  },
-  "R26BK01553057-000": {
-    "model": "gpt-5-mini",
-    "provider": "openai",
-    "reason": "출판·제작 중심의 도서 구매로 AI·헬스 등 전문분야와 무관",
-    "score": 1,
-    "scored_at": "2026-06-01T10:41:35+09:00"
-  },
   "R26BK01553057-001": {
     "model": "gpt-5-mini",
     "provider": "openai",
     "reason": "AI 관련 용어는 있으나 단순 도서 제작·구매로 연구·시스템과 무관",
     "score": 1,
     "scored_at": "2026-06-03T11:10:37+09:00"
-  },
-  "R26BK01553117-000": {
-    "model": "gpt-5-mini",
-    "provider": "openai",
-    "reason": "AI·빅데이터 R&D 데이터 표준화 및 플랫폼 탑재 구축과 직접 연관",
-    "score": 5,
-    "scored_at": "2026-06-01T10:41:35+09:00"
-  },
-  "R26BK01553148-000": {
-    "model": "gpt-5-mini",
-    "provider": "openai",
-    "reason": "AI 사용 시간 조사로 AI 연구·정책·컨설팅과 직접 관련",
-    "score": 5,
-    "scored_at": "2026-06-01T10:41:35+09:00"
   },
   "R26BK01553230-000": {
     "model": "gpt-5-mini",
@@ -243,13 +201,6 @@
     "reason": "회계감사 용역으로 AI 기술·연구·시스템 구축과 직접적 연관성 없음",
     "score": 1,
     "scored_at": "2026-06-02T11:01:27+09:00"
-  },
-  "R26BK01553530-000": {
-    "model": "gpt-5-mini",
-    "provider": "openai",
-    "reason": "기업 연계 AI·데이터 아카데미 운영으로 AI 인재양성 관련",
-    "score": 5,
-    "scored_at": "2026-06-01T10:41:35+09:00"
   },
   "R26BK01553590-000": {
     "model": "gpt-5-mini",
