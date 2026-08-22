@@ -1,0 +1,32 @@
+{
+  "generated_at": "2026-08-23T08:48:11+09:00",
+  "date": "2026-08-23",
+  "count": 1,
+  "items": [
+    {
+      "bidNtceNo": "R26BK01693737",
+      "bidNtceOrd": "000",
+      "bidNtceNm": "2026년 인공지능 콘텐츠 제작지원 사업 - XR LED 디스플레이 시스템 임차·설치·운영 용역",
+      "ntceInsttNm": "(주)쉐어박스",
+      "ntceInsttCd": "Z062373",
+      "dminsttNm": "(주)쉐어박스",
+      "dminsttCd": "Z062373",
+      "bidMethdNm": "전자입찰",
+      "cntrctCnclsMthdNm": "제한경쟁",
+      "ntceKindNm": "등록공고",
+      "bsnsDivNm": "",
+      "srvceDivNm": "일반용역",
+      "ppswGnrlSrvceYn": "N",
+      "bidNtceDt": "2026-08-22 20:46:31",
+      "bidBeginDt": "2026-08-22 22:00:00",
+      "bidClseDt": "2026-08-28 12:00:00",
+      "opengDt": "2026-08-28 13:00:00",
+      "asignBdgtAmt": "109560000",
+      "presmptPrce": "99600000",
+      "bidNtceDtlUrl": "https://www.g2b.go.kr/link/PNPE027_01/single/?bidPbancNo=R26BK01693737&bidPbancOrd=000",
+      "ntceInsttOfclNm": "신연식",
+      "ntceInsttOfclTelNo": "02-762-1998",
+      "sucsfbidMthdNm": "제한적최저가(낙찰하한율)-제한적최저가(낙찰하한율)"
+    }
+  ]
+}
