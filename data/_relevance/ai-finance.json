@@ -20,20 +20,6 @@
     "score": 5,
     "scored_at": "2026-06-30T10:32:48+09:00"
   },
-  "R26BK01598321-000": {
-    "model": "gpt-5-mini",
-    "provider": "openai",
-    "reason": "회계·외부감사 용역으로 AI·의료·데이터 분야와 무관",
-    "score": 0,
-    "scored_at": "2026-06-29T10:39:03+09:00"
-  },
-  "R26BK01598503-001": {
-    "model": "gpt-5-mini",
-    "provider": "openai",
-    "reason": "APEC AI 이니셔티브 실행계획 연구로 AI 정책·전략·컨설팅 관련",
-    "score": 5,
-    "scored_at": "2026-06-29T10:39:03+09:00"
-  },
   "R26BK01601746-000": {
     "model": "gpt-5-mini",
     "provider": "openai",
@@ -90,26 +76,12 @@
     "score": 4,
     "scored_at": "2026-06-30T10:32:48+09:00"
   },
-  "R26BK01605575-000": {
-    "model": "gpt-5-mini",
-    "provider": "openai",
-    "reason": "AI 적용이지만 대상이 골프장 코스관리라 의료·금융 등 관심분야와 무관",
-    "score": 1,
-    "scored_at": "2026-06-29T10:39:03+09:00"
-  },
   "R26BK01605575-001": {
     "model": "gpt-5-mini",
     "provider": "openai",
     "reason": "AI 포함이나 골프장 코스관리로 사용자 관심분야와 실질적 무관",
     "score": 1,
     "scored_at": "2026-07-01T10:42:09+09:00"
-  },
-  "R26BK01605576-000": {
-    "model": "gpt-5-mini",
-    "provider": "openai",
-    "reason": "AI 데이터 라벨링·모델 개발로 AI 컨설팅·시스템 구축과 관련",
-    "score": 4,
-    "scored_at": "2026-06-29T10:39:03+09:00"
   },
   "R26BK01605576-001": {
     "model": "gpt-5-mini",
@@ -118,26 +90,12 @@
     "score": 1,
     "scored_at": "2026-07-01T10:42:09+09:00"
   },
-  "R26BK01605582-000": {
-    "model": "gpt-5-mini",
-    "provider": "openai",
-    "reason": "생성형 AI 시스템 구축으로 AI/LLM 개발·구축에 직접 관련",
-    "score": 5,
-    "scored_at": "2026-06-29T10:39:03+09:00"
-  },
   "R26BK01605582-001": {
     "model": "gpt-5-mini",
     "provider": "openai",
     "reason": "생성형 AI(LLM) 시스템 구축으로 AI 개발·구축 업무에 직접 관련",
     "score": 5,
     "scored_at": "2026-07-01T10:42:09+09:00"
-  },
-  "R26BK01605618-000": {
-    "model": "gpt-5-mini",
-    "provider": "openai",
-    "reason": "AI 포털 고도화로 AI 시스템 개발·교육·컨설팅과 연관됨",
-    "score": 4,
-    "scored_at": "2026-06-29T10:39:03+09:00"
   },
   "R26BK01605652-000": {
     "model": "gpt-5-mini",
@@ -152,20 +110,6 @@
     "reason": "교원 대상 생성형 AI 직무연수로 AI 교원연수·리터러시와 직접 관련",
     "score": 5,
     "scored_at": "2026-06-30T10:32:48+09:00"
-  },
-  "R26BK01605714-000": {
-    "model": "gpt-5-mini",
-    "provider": "openai",
-    "reason": "청소년 대상 AI 챌린지 운영으로 AI 인재양성·교육 및 AI 리터러시와 직접 관련",
-    "score": 5,
-    "scored_at": "2026-06-29T10:39:03+09:00"
-  },
-  "R26BK01605759-000": {
-    "model": "gpt-5-mini",
-    "provider": "openai",
-    "reason": "AI 활용 사례 발굴·확산 연구·편집은 생성형AI·AI 서비스 관련",
-    "score": 5,
-    "scored_at": "2026-06-29T10:39:03+09:00"
   },
   "R26BK01605783-000": {
     "model": "gpt-5-mini",
@@ -187,13 +131,6 @@
     "reason": "직업훈련 AI 심사시스템 PMO로 AI 시스템 구축·컨설팅 관련",
     "score": 5,
     "scored_at": "2026-07-01T10:42:09+09:00"
-  },
-  "R26BK01605994-000": {
-    "model": "gpt-5-mini",
-    "provider": "openai",
-    "reason": "AI 기반 이상징후 탐지 시스템 구축은 AI·데이터분석 관심과 직접 관련",
-    "score": 5,
-    "scored_at": "2026-06-29T10:39:03+09:00"
   },
   "R26BK01606004-000": {
     "model": "gpt-5-mini",
