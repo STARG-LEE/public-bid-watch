@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-23T10:47:23+09:00",
+  "generated_at": "2026-09-24T10:41:55+09:00",
   "default_slug": "ai-finance",
   "scenarios": [
     {
@@ -24,29 +24,29 @@
       ],
       "stats": {
         "open": 482,
-        "closing_soon": 75,
-        "closed": 911,
-        "total": 1468,
+        "closing_soon": 87,
+        "closed": 900,
+        "total": 1469,
         "by_source": {
           "closing_soon": {
-            "g2b": 55,
-            "bizinfo": 20
+            "bizinfo": 28,
+            "g2b": 59
           },
           "open": {
-            "g2b": 177,
-            "bizinfo": 271,
+            "g2b": 186,
+            "bizinfo": 262,
             "nrf": 8,
             "iitp": 26
           },
           "closed": {
-            "g2b": 529,
-            "bizinfo": 375,
+            "bizinfo": 385,
+            "g2b": 508,
             "nrf": 1,
             "iris": 6
           },
           "total": {
-            "g2b": 761,
-            "bizinfo": 666,
+            "g2b": 753,
+            "bizinfo": 675,
             "iris": 6,
             "nrf": 9,
             "iitp": 26
