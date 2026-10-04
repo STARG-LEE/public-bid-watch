@@ -1,0 +1,32 @@
+{
+  "generated_at": "2026-10-04T11:49:40+09:00",
+  "date": "2026-10-04",
+  "count": 1,
+  "items": [
+    {
+      "bidNtceNo": "R26BK01756010",
+      "bidNtceOrd": "000",
+      "bidNtceNm": "(긴급) 제조현장 산업안전 AI 솔루션 학습용 데이터 가공 정제 용역",
+      "ntceInsttNm": "주식회사 마음에이아이",
+      "ntceInsttCd": "Z062198",
+      "dminsttNm": "주식회사 마음에이아이",
+      "dminsttCd": "Z062198",
+      "bidMethdNm": "직찰",
+      "cntrctCnclsMthdNm": "일반경쟁",
+      "ntceKindNm": "등록공고",
+      "bsnsDivNm": "",
+      "srvceDivNm": "일반용역",
+      "ppswGnrlSrvceYn": "N",
+      "bidNtceDt": "2026-10-03 14:31:16",
+      "bidBeginDt": "",
+      "bidClseDt": "",
+      "opengDt": "2026-10-14 15:00:00",
+      "asignBdgtAmt": "176000000",
+      "presmptPrce": "160000000",
+      "bidNtceDtlUrl": "https://www.g2b.go.kr/link/PNPE027_01/single/?bidPbancNo=R26BK01756010&bidPbancOrd=000",
+      "ntceInsttOfclNm": "김한결",
+      "ntceInsttOfclTelNo": "16613222",
+      "sucsfbidMthdNm": "협상에의한계약-협상에 의한 낙찰자 결정"
+    }
+  ]
+}
